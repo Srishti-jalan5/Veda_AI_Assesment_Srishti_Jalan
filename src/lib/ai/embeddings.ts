@@ -1,3 +1,5 @@
+import { getResolvedGeminiApiKey } from "./api-keys";
+
 // ==========================================
 // 1. Interfaces & Types
 // ==========================================
@@ -135,7 +137,7 @@ export async function generateEmbedding(
     return new Array(128).fill(0);
   }
 
-  const model = options.model || "text-embedding-004";
+  const model = options.model || "deterministic-local";
   const cacheKey = toCacheKey(trimmed, model);
 
   // 2. Check in-memory session cache
@@ -143,16 +145,12 @@ export async function generateEmbedding(
     return sessionEmbeddingCache.get(cacheKey)!;
   }
 
-  const apiKey =
-    options.apiKey ||
-    (typeof process !== "undefined"
-      ? process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
-      : undefined);
+  const apiKey = getResolvedGeminiApiKey(options.apiKey);
 
   let embedding: number[];
 
-  // 3. If API Key is present and live API is requested, call Gemini text-embedding-004
-  if (apiKey && options.model !== "deterministic-local") {
+  // 3. If API Key is present and live API is requested, call Gemini embedding model
+  if (apiKey && options.model === "text-embedding-004") {
     try {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${apiKey}`,

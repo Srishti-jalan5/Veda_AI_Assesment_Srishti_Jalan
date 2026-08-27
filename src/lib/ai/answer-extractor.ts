@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getResolvedGroqApiKey, getResolvedGeminiApiKey } from "./api-keys";
 
 // ==========================================
 // 1. Zod Schemas & Type Definitions
@@ -178,11 +179,8 @@ async function extractAnswersFromSinglePage(
   page: AnswerSheetPageInput,
   options: AnswerExtractionOptions = {}
 ): Promise<HandwrittenAnswerBlock[]> {
-  const groqApiKey =
-    typeof process !== "undefined" ? process.env.GROQ_API_KEY : undefined;
-  const geminiApiKey =
-    options.apiKey ||
-    (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : undefined);
+  const groqApiKey = getResolvedGroqApiKey(options.apiKey);
+  const geminiApiKey = getResolvedGeminiApiKey(options.apiKey);
 
   // 1. Text-only path via Groq if digital text exists and no image available
   if (groqApiKey && page.extractedText && page.extractedText.trim().length > 30 && !page.dataUrl?.startsWith("data:image/png")) {
@@ -323,15 +321,12 @@ export async function extractAnswersFromPages(
     return validateExtractedAnswers(options.mockPayload);
   }
 
-  const groqApiKey =
-    typeof process !== "undefined" ? process.env.GROQ_API_KEY : undefined;
-  const geminiApiKey =
-    options.apiKey ||
-    (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : undefined);
+  const groqApiKey = getResolvedGroqApiKey(options.apiKey);
+  const geminiApiKey = getResolvedGeminiApiKey(options.apiKey);
 
   if (!groqApiKey && !geminiApiKey) {
     throw new AnswerExtractionError(
-      "Answer Extraction Failed: Missing API Key. Please set GEMINI_API_KEY or GROQ_API_KEY in your environment.",
+      "Answer Extraction Failed: Missing API Key.",
       "MISSING_API_KEY"
     );
   }

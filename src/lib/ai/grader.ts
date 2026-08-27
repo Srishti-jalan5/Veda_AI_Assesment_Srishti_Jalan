@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getResolvedGroqApiKey, getResolvedGeminiApiKey } from "./api-keys";
 
 // ==========================================
 // 1. Types & Zod Schemas
@@ -162,16 +163,11 @@ export async function gradeQuestionAnswer(
     };
   }
 
-  const groqApiKey =
-    typeof process !== "undefined" ? process.env.GROQ_API_KEY : undefined;
-  const geminiApiKey =
-    options.apiKey ||
-    (typeof process !== "undefined"
-      ? process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY
-      : undefined);
+  const groqApiKey = getResolvedGroqApiKey(options.apiKey);
+  const geminiApiKey = getResolvedGeminiApiKey(options.apiKey);
 
-  // If no live API key, use deterministic evaluation
-  if ((!groqApiKey && !geminiApiKey) || options.model === "mock-fallback") {
+  // If mock model requested, use deterministic evaluation
+  if (options.model === "mock-fallback") {
     return generateDeterministicGrade(input);
   }
 
