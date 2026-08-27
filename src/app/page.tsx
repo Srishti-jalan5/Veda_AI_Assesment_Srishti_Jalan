@@ -196,7 +196,7 @@ export default function Home() {
           )}
 
           {currentStep === "results" && (
-            <div className="w-full h-full flex items-center justify-center p-1 sm:p-2 overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center p-1 sm:p-1.5 overflow-hidden">
               <AssessmentReviewWorkspace
                 questions={processedAssessment?.questions}
                 mappings={processedAssessment?.mappings}

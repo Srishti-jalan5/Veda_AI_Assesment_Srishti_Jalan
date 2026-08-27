@@ -137,7 +137,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
     <div
       style={{
         background: "#FFFFFF",
-        borderRadius: "20px",
+        borderRadius: "6px",
         border: "1.25px solid rgba(0, 0, 0, 0.1)",
       }}
       className={cn(
@@ -177,7 +177,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
             style={{
               height: "32px",
               background: "rgba(255, 255, 255, 0.1)",
-              borderRadius: "7px",
+              borderRadius: "4px",
               padding: "4px 8px",
             }}
             className="hidden sm:flex items-center justify-center text-white/80 hover:text-white hover:bg-white/20 active:scale-95 transition-all text-xs font-semibold gap-1"
@@ -191,7 +191,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
             style={{
               height: "32px",
               background: "rgba(255, 255, 255, 0.1)",
-              borderRadius: "7px",
+              borderRadius: "4px",
               padding: "4px 8px",
               gap: "6px",
             }}
@@ -233,7 +233,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
             style={{
               height: "32px",
               background: "rgba(255, 255, 255, 0.1)",
-              borderRadius: "7px",
+              borderRadius: "4px",
               padding: "4px 8px",
               gap: "6px",
             }}
@@ -275,7 +275,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
       {/* Main Canvas Scroll Viewport */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-auto bg-[#E5E7EB]/60 p-4 flex justify-center items-start relative scroll-smooth"
+        className="flex-1 overflow-auto bg-[#E5E7EB]/60 p-3 flex justify-center items-start relative scroll-smooth"
       >
         {/* Scaled Rendered Paper Page Container */}
         <div
@@ -283,7 +283,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
             transform: `scale(${zoomLevel / 100})`,
             transformOrigin: "top center",
           }}
-          className="relative w-full max-w-[658px] min-h-[824px] bg-[#FAF8F5] rounded-xl shadow-lg border border-slate-300 overflow-hidden select-none transition-transform duration-150"
+          className="relative w-full max-w-[658px] min-h-[824px] bg-[#FAF8F5] rounded-sm shadow-lg border border-slate-300 overflow-hidden select-none transition-transform duration-150"
         >
           {/* Base Layer: Rendered PDF Page Image */}
           {pageImages && pageImages[currentPageIndex] ? (
@@ -314,9 +314,9 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
                 width: currentBoxStyle.width,
                 height: currentBoxStyle.height,
               }}
-              className="border-2 border-emerald-500 bg-emerald-500/15 rounded-lg pointer-events-none transition-all duration-200"
+              className="border-2 border-emerald-500 bg-emerald-500/15 rounded-xs pointer-events-none transition-all duration-200"
             >
-              <span className="absolute -top-3 left-2 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded font-bold shadow-xs">
+              <span className="absolute -top-3 left-2 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded-xs font-bold shadow-xs">
                 {questionLabel}
               </span>
             </div>

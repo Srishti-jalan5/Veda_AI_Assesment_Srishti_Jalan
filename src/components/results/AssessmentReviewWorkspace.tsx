@@ -126,7 +126,7 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
       </div>
 
       {/* Main Split-View Workspace (Left: QuestionPanel 480px, Right: AnswerViewer) */}
-      <div className="flex-1 flex flex-row overflow-hidden p-3 gap-3">
+      <div className="flex-1 flex flex-row overflow-hidden p-1.5 gap-1.5">
         {/* Left Side: Question List & Rubric Panel */}
         <div
           className={cn(

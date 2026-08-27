@@ -18,23 +18,23 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   return (
-    <header className="w-full flex items-center justify-center pt-2 sm:pt-2.5 px-3 z-10 shrink-0 select-none">
-      {/* Sleek Top Bar (Height: 48px, Radius: 14px, Background: rgba(255, 255, 255, 0.75), Backdrop blur) */}
+    <header className="w-full flex items-center justify-center pt-1.5 px-1.5 z-10 shrink-0 select-none">
+      {/* Sleek Top Bar (Height: 48px, Radius: 6px, Background: rgba(255, 255, 255, 0.75), Backdrop blur) */}
       <div
         style={{
           height: "48px",
-          borderRadius: "14px",
+          borderRadius: "6px",
           background: "rgba(255, 255, 255, 0.75)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          padding: "0px 6px 0px 16px",
+          padding: "0px 6px 0px 14px",
           gap: "8px",
         }}
         className="w-full max-w-[1341px] flex items-center justify-between border border-white/60 shadow-xs"
       >
         {/* Left Section: Back Arrow & Exams Breadcrumb */}
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          {/* Left Arrow Circle (34px × 34px) */}
+          {/* Left Arrow Button (34px × 34px) */}
           <button
             onClick={onBack}
             title="Go Back"
@@ -42,7 +42,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               width: "34px",
               height: "34px",
               background: "#FFFFFF",
-              borderRadius: "100px",
+              borderRadius: "5px",
             }}
             className="flex items-center justify-center shadow-xs text-[#303030] hover:scale-105 active:scale-95 transition-transform shrink-0"
           >
@@ -76,7 +76,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               />
             </svg>
 
-            {/* Breadcrumb Text (Reduced by 2px to 14px) */}
+            {/* Breadcrumb Text */}
             <span
               style={{
                 fontFamily: "var(--font-bricolage), sans-serif",
@@ -102,11 +102,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               width: "32px",
               height: "32px",
               background: "#F6F6F6",
-              borderRadius: "100px",
+              borderRadius: "5px",
             }}
             className="flex items-center justify-center hover:bg-slate-200/80 transition-colors"
           >
-            <div className="w-[20px] h-[20px] rounded-full border-[1.75px] border-[#303030] flex items-center justify-center text-[#303030] font-bold text-[11px] leading-none">
+            <div className="w-[18px] h-[18px] rounded-xs border-[1.5px] border-[#303030] flex items-center justify-center text-[#303030] font-bold text-[11px] leading-none">
               ?
             </div>
           </button>
@@ -118,7 +118,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               width: "32px",
               height: "32px",
               background: "#F6F6F6",
-              borderRadius: "100px",
+              borderRadius: "5px",
             }}
             className="relative flex items-center justify-center hover:bg-slate-200/80 transition-colors"
           >
@@ -140,7 +140,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               width: "32px",
               height: "32px",
               background: "#FFFFFF",
-              borderRadius: "49px",
+              borderRadius: "5px",
             }}
             className="flex items-center justify-center shadow-xs hover:scale-105 transition-transform"
           >
@@ -160,15 +160,15 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             <button
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
               style={{
-                height: "38px",
-                borderRadius: "10px",
+                height: "36px",
+                borderRadius: "5px",
                 padding: "4px 8px",
                 gap: "6px",
               }}
               className="flex items-center hover:bg-black/5 transition-colors"
             >
-              {/* Profile Image (28px × 28px) */}
-              <div className="w-[28px] h-[28px] rounded-full overflow-hidden shrink-0 shadow-xs border border-black/5 bg-[#F6F6F6] flex items-center justify-center">
+              {/* Profile Image (26px × 26px) */}
+              <div className="w-[26px] h-[26px] rounded-xs overflow-hidden shrink-0 shadow-xs border border-black/5 bg-[#F6F6F6] flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/madhur-avatar.png"
@@ -177,7 +177,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                 />
               </div>
 
-              {/* Madhur Rastogi + Chevron (Reduced to 14px) */}
+              {/* Madhur Rastogi + Chevron */}
               <div className="flex items-center gap-1">
                 <span
                   style={{
@@ -198,20 +198,20 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
             {/* Profile Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-xl shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-md shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
                 <div className="p-2 border-b border-slate-100 mb-1">
                   <p className="text-xs font-bold text-slate-800">Madhur Rastogi</p>
                   <p className="text-[11px] text-slate-500">Teacher • DPS Bokaro</p>
                 </div>
                 <button
                   onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xs transition-colors"
                 >
                   Account Settings
                 </button>
                 <button
                   onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xs transition-colors"
                 >
                   Sign Out
                 </button>

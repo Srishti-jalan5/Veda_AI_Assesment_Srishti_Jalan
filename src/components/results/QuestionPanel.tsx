@@ -48,8 +48,8 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
     return (
       <div
         style={{
-          borderRadius: "100px",
-          padding: "3px 10px",
+          borderRadius: "4px",
+          padding: "3px 8px",
         }}
         className={cn(
           "flex items-center justify-center shrink-0 select-none",
@@ -79,10 +79,10 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
     <div
       style={{
         background: "rgba(255, 255, 255, 0.5)",
-        borderRadius: "16px",
-        padding: "14px",
+        borderRadius: "6px",
+        padding: "12px",
       }}
-      className="w-full h-full flex flex-col gap-[12px] overflow-hidden select-none border border-white/60 shadow-xs"
+      className="w-full h-full flex flex-col gap-[10px] overflow-hidden select-none border border-white/60 shadow-xs"
     >
       {/* Top Header Bar */}
       <div className="w-full h-[38px] flex items-center justify-between shrink-0 px-1">
@@ -104,10 +104,10 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
         <button
           onClick={handleToggleExpandAll}
           style={{
-            height: "36px",
+            height: "32px",
             background: "#FFFFFF",
-            borderRadius: "64px",
-            padding: "0px 14px",
+            borderRadius: "5px",
+            padding: "0px 12px",
             boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.06)",
           }}
           className="flex items-center justify-center hover:bg-slate-50 active:scale-95 transition-all"
@@ -128,7 +128,7 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
       </div>
 
       {/* Scrollable Questions Column */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-[10px]">
+      <div className="flex-1 overflow-y-auto pr-1 space-y-[8px]">
         {questions.map((q) => {
           const isSelected = q.id === selectedQuestionId;
           const isExpanded = expandedMap[q.id] || isSelected;
@@ -138,7 +138,7 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
               key={q.id}
               onClick={() => handleCardClick(q)}
               style={{
-                borderRadius: "14px",
+                borderRadius: "6px",
                 padding: "10px 12px",
                 gap: "10px",
               }}
@@ -158,11 +158,11 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
                     style={{
                       width: "28px",
                       height: "28px",
-                      borderRadius: "100px",
+                      borderRadius: "5px",
                       background: isSelected
                         ? "#FF5623"
                         : "rgba(43, 43, 43, 0.8)",
-                      border: "2px solid rgba(255, 255, 255, 0.25)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.25)",
                     }}
                     className="flex items-center justify-center text-white font-extrabold text-[15px] shrink-0"
                   >
@@ -184,7 +184,7 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
                         width: "28px",
                         height: "28px",
                         background: "#F6F6F6",
-                        borderRadius: "100px",
+                        borderRadius: "5px",
                       }}
                       className="flex items-center justify-center shrink-0"
                     >

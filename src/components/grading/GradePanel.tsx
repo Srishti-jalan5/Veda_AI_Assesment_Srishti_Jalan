@@ -49,27 +49,27 @@ export const GradePanel: React.FC<GradePanelProps> = ({
     <div
       style={{
         background: "#FFFFFF",
-        borderRadius: "14px",
+        borderRadius: "6px",
         border: "1px solid rgba(0, 0, 0, 0.08)",
       }}
       className={cn("w-full overflow-hidden shadow-2xs select-none transition-all", className)}
     >
       {/* Top Header Card */}
-      <div className="p-3.5 flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/50">
+      <div className="p-3 flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/50">
         {/* Left: Score Badge & Status */}
         <div className="flex items-center gap-2.5 min-w-0">
           {/* Status Icon */}
           {isFullMarks ? (
-            <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-xs bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5" />
             </div>
           ) : isZeroMarks ? (
-            <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
-              <XCircle className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-xs bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+              <XCircle className="w-3.5 h-3.5" />
             </div>
           ) : (
-            <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-              <AlertCircle className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-xs bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+              <AlertCircle className="w-3.5 h-3.5" />
             </div>
           )}
 
@@ -97,7 +97,7 @@ export const GradePanel: React.FC<GradePanelProps> = ({
               {/* Pill percentage */}
               <span
                 className={cn(
-                  "px-1.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                  "px-1.5 py-0.2 rounded-xs text-[10px] font-bold uppercase tracking-wider",
                   isFullMarks
                     ? "bg-emerald-100 text-emerald-700"
                     : isZeroMarks
@@ -120,18 +120,18 @@ export const GradePanel: React.FC<GradePanelProps> = ({
         </div>
 
         {/* Right: Actions (Edit & Expand Toggle) */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => setIsEditing(!isEditing)}
             title="Edit score"
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition-colors"
+            className="p-1 rounded-xs text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition-colors"
           >
             <Edit3 className="w-3.5 h-3.5" />
           </button>
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition-colors"
+            className="p-1 rounded-xs text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 transition-colors"
           >
             {isExpanded ? (
               <ChevronUp className="w-4 h-4" />
@@ -144,9 +144,9 @@ export const GradePanel: React.FC<GradePanelProps> = ({
 
       {/* Expandable AI Feedback Notes Body */}
       {isExpanded && (
-        <div className="p-3.5 space-y-3 animate-in fade-in duration-150">
+        <div className="p-3 space-y-2.5 animate-in fade-in duration-150">
           {/* AI Feedback Box */}
-          <div className="bg-[#FFF9F5] border border-[#FFE8D6] rounded-xl p-3 flex flex-col gap-1.5">
+          <div className="bg-[#FFF9F5] border border-[#FFE8D6] rounded-xs p-2.5 flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5 text-[#FF5623]">
               <Sparkles className="w-3.5 h-3.5" />
               <span
@@ -168,7 +168,7 @@ export const GradePanel: React.FC<GradePanelProps> = ({
 
           {/* Key Missing Points (if present) */}
           {effectiveMissing.length > 0 && (
-            <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-3">
+            <div className="bg-slate-50 border border-slate-200/70 rounded-xs p-2.5">
               <span className="text-[11.5px] font-bold text-slate-700 block mb-1.5">
                 Key Missing Points / Suggestions:
               </span>
@@ -184,7 +184,7 @@ export const GradePanel: React.FC<GradePanelProps> = ({
 
           {/* Teacher Override Editor (Inline) */}
           {isEditing && (
-            <div className="bg-slate-100/80 border border-slate-300/80 rounded-xl p-3 space-y-2.5 animate-in fade-in duration-150">
+            <div className="bg-slate-100/80 border border-slate-300/80 rounded-xs p-2.5 space-y-2 animate-in fade-in duration-150">
               <span className="text-xs font-bold text-slate-800">
                 Teacher Score Override
               </span>
@@ -198,7 +198,7 @@ export const GradePanel: React.FC<GradePanelProps> = ({
                   step={0.5}
                   value={overrideMarks}
                   onChange={(e) => setOverrideMarks(Number(e.target.value))}
-                  className="w-16 px-2 py-1 text-xs border border-slate-300 rounded-md bg-white font-bold"
+                  className="w-16 px-2 py-1 text-xs border border-slate-300 rounded-xs bg-white font-bold"
                 />
                 <span className="text-xs text-slate-500">/ {effectiveMax}</span>
               </div>
@@ -208,7 +208,7 @@ export const GradePanel: React.FC<GradePanelProps> = ({
                 placeholder="Optional teacher feedback note..."
                 value={teacherNote}
                 onChange={(e) => setTeacherNote(e.target.value)}
-                className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md bg-white text-slate-800 placeholder:text-slate-400"
+                className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-xs bg-white text-slate-800 placeholder:text-slate-400"
               />
 
               <div className="flex justify-end gap-2 pt-1">
@@ -222,7 +222,7 @@ export const GradePanel: React.FC<GradePanelProps> = ({
                 <button
                   type="button"
                   onClick={handleSaveOverride}
-                  className="px-3 py-1 text-xs font-bold bg-[#303030] text-white rounded-md hover:bg-black transition-colors"
+                  className="px-3 py-1 text-xs font-bold bg-[#303030] text-white rounded-xs hover:bg-black transition-colors"
                 >
                   Save Override
                 </button>

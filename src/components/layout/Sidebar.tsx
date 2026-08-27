@@ -36,15 +36,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       style={{
-        width: isCollapsed ? "60px" : "272px",
-        height: "calc(100vh - 24px)",
-        maxHeight: "765px",
-        borderRadius: "16px",
+        width: isCollapsed ? "58px" : "272px",
+        height: "calc(100vh - 14px)",
+        maxHeight: "780px",
+        borderRadius: "6px",
         boxShadow:
-          "0px 16px 48px rgba(0, 0, 0, 0.1), 0px 24px 36px rgba(0, 0, 0, 0.15)",
+          "0px 8px 24px rgba(0, 0, 0, 0.08), 0px 12px 20px rgba(0, 0, 0, 0.1)",
       }}
       className={cn(
-        "hidden md:flex flex-col bg-white transition-all duration-300 select-none z-20 shrink-0 my-3 ml-3",
+        "hidden md:flex flex-col bg-white transition-all duration-300 select-none z-20 shrink-0 my-1.5 ml-1.5",
         isCollapsed ? "p-2 items-center" : "p-4 sm:p-5"
       )}
     >
@@ -59,13 +59,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         >
           {/* Logo + Title */}
           <div className="flex items-center gap-2">
-            {/* Component 1 (Width: 36px, Height: 36px, Radius: 9px) */}
+            {/* Component 1 (Width: 36px, Height: 36px, Radius: 5px) */}
             <div
               onClick={onToggleCollapse}
               style={{
                 width: "36px",
                 height: "36px",
-                borderRadius: "9px",
+                borderRadius: "5px",
               }}
               className="relative flex items-center justify-center shrink-0 shadow-xs overflow-hidden cursor-pointer hover:scale-105 transition-transform select-none bg-[#303030]"
             >
@@ -144,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   background: "#272727",
                   boxShadow:
                     "0px 12px 32px rgba(255, 255, 255, 0.12), inset 0px 0px 24px rgba(255, 255, 255, 0.2)",
-                  borderRadius: "100px",
+                  borderRadius: "6px",
                 }}
                 className="mx-auto flex items-center justify-center text-white hover:scale-105 transition-transform"
               >
@@ -157,7 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   background: "#272727",
                   boxShadow:
                     "0px 12px 32px rgba(255, 255, 255, 0.12), inset 0px 0px 24px rgba(255, 255, 255, 0.2)",
-                  borderRadius: "100px",
+                  borderRadius: "6px",
                 }}
                 className="w-full py-1.5 px-4 flex items-center justify-center gap-2 text-white hover:bg-[#1f1f1f] transition-all group"
               >
@@ -196,7 +196,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   title={isCollapsed ? item.label : undefined}
                   style={{
                     height: "34px",
-                    borderRadius: "8px",
+                    borderRadius: "5px",
                     background: isActive ? "#F0F0F0" : "transparent",
                   }}
                   className={cn(
@@ -253,7 +253,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 width: "38px",
                 height: "38px",
                 background: "#F0F0F0",
-                borderRadius: "9px",
+                borderRadius: "5px",
               }}
               className="flex items-center justify-center p-0.5"
             >
@@ -271,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               style={{
                 width: "38px",
                 height: "30px",
-                borderRadius: "6px",
+                borderRadius: "5px",
               }}
               className="flex items-center justify-center text-[#2B2B2B] hover:bg-slate-100 transition-colors"
             >
@@ -283,13 +283,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             style={{
               height: "72px",
               background: "#F0F0F0",
-              borderRadius: "14px",
+              borderRadius: "6px",
               padding: "10px 12px",
             }}
             className="w-full flex items-center gap-2.5"
           >
             {/* School Crest Logo */}
-            <div className="w-[42px] h-[42px] rounded-lg bg-white flex items-center justify-center border border-emerald-600/30 shrink-0 shadow-xs">
+            <div className="w-[42px] h-[42px] rounded-sm bg-white flex items-center justify-center border border-emerald-600/30 shrink-0 shadow-xs">
               <div className="text-center">
                 <div className="w-4 h-4 mx-auto text-emerald-700 font-serif font-black text-[10px] leading-none">
                   ⚖
