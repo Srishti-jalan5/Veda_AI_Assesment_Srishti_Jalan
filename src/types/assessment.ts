@@ -20,8 +20,8 @@ export interface QuestionItem {
   maxMarks: number;
   awardedMarks: number;
   aiFeedback: string;
-  answerPage: number;
-  boundingBox: BoundingBox;
+  answerPage?: number;
+  boundingBox?: BoundingBox;
   status?: "matched" | "uncertain" | "unanswered";
   confidence?: number;
   matchedAnswerIds?: string[];
