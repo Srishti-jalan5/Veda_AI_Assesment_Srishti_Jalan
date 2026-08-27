@@ -1,4 +1,4 @@
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import * as mupdf from "mupdf";
 import { PDFDocument, PDFName, PDFDict, PDFRawStream } from "pdf-lib";
 
 /**
@@ -40,7 +40,6 @@ export function detectImageMimeType(buffer: Buffer | Uint8Array): string | null 
 
 /**
  * Creates a fresh, deep-copied Uint8Array with its own independent ArrayBuffer.
- * This completely prevents "Cannot perform Construct on a detached ArrayBuffer" errors.
  */
 export function toClonedUint8Array(buffer: Buffer | Uint8Array): Uint8Array {
   const src = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
@@ -49,62 +48,43 @@ export function toClonedUint8Array(buffer: Buffer | Uint8Array): Uint8Array {
   return copy;
 }
 
-type CreateCanvasType = typeof import("@napi-rs/canvas").createCanvas;
-let cachedCreateCanvas: CreateCanvasType | null = null;
-
-async function getCreateCanvas(): Promise<CreateCanvasType | null> {
-  if (cachedCreateCanvas) return cachedCreateCanvas;
-  try {
-    const napi = await import("@napi-rs/canvas");
-    cachedCreateCanvas = napi.createCanvas;
-    return cachedCreateCanvas;
-  } catch (err) {
-    console.warn("Failed to load @napi-rs/canvas:", err);
-    return null;
-  }
-}
-
 export interface RenderedDocumentResult {
   dataUrls: string[];
   pageTexts: string[];
 }
 
 /**
- * Extracts verbatim text per page from a PDF buffer.
+ * Extracts verbatim text per page from a PDF buffer using WASM MuPDF.
  */
 export async function extractTextFromPdf(
   buffer: Buffer | Uint8Array
 ): Promise<string[]> {
   const bytes = toClonedUint8Array(buffer);
   try {
-    const loadingTask = pdfjs.getDocument({
-      data: bytes,
-      useSystemFonts: true,
-      disableFontFace: false,
-    });
-    const pdfDoc = await loadingTask.promise;
-    const pageCount = pdfDoc.numPages;
+    const doc = mupdf.Document.openDocument(bytes, "application/pdf");
+    const pageCount = doc.countPages();
     const texts: string[] = [];
 
-    for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-      const page = await pdfDoc.getPage(pageNum);
-      const content = await page.getTextContent();
-      const pageText = content.items
-        .map((item) => ("str" in item && typeof item.str === "string" ? item.str : ""))
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
+    for (let i = 0; i < pageCount; i++) {
+      const page = doc.loadPage(i);
+      let pageText = "";
+      try {
+        const structuredText = page.toStructuredText();
+        pageText = structuredText.asText().replace(/\s+/g, " ").trim();
+      } catch {
+        pageText = "";
+      }
       texts.push(pageText);
     }
     return texts;
   } catch (err) {
-    console.warn("Failed to extract text with pdfjs:", err);
+    console.warn("MuPDF text extraction note:", (err as Error).message);
     return [];
   }
 }
 
 /**
- * Extracts embedded image streams from scanned PDF files.
+ * Extracts embedded image streams from scanned PDF files using pdf-lib.
  */
 export async function extractEmbeddedImagesFromPdf(
   buffer: Buffer | Uint8Array
@@ -164,7 +144,9 @@ export async function extractEmbeddedImagesFromPdf(
 }
 
 /**
- * Unified PDF document processor: renders pages to PNG images and extracts text in a single pass.
+ * Unified WASM-compatible PDF document processor:
+ * Renders pages to PNG images and extracts text in a single pass using MuPDF WASM.
+ * Works seamlessly in Vercel Serverless / AWS Lambda without native C++ / Cairo dependencies.
  */
 export async function processPdfDocument(
   buffer: Buffer | Uint8Array,
@@ -183,67 +165,41 @@ export async function processPdfDocument(
     };
   }
 
-  // 2. Primary Rasterizer & Text Extractor (Single-Pass)
-  const createCanvas = await getCreateCanvas();
-  if (createCanvas) {
-    try {
-      const loadingTask = pdfjs.getDocument({
-        data: toClonedUint8Array(bytes),
-        useSystemFonts: true,
-        disableFontFace: false,
-      });
-      const pdfDoc = await loadingTask.promise;
-      const pageCount = pdfDoc.numPages;
-      const dataUrls: string[] = [];
-      const pageTexts: string[] = [];
+  // 2. Primary WASM Rasterizer & Text Extractor (MuPDF)
+  try {
+    const doc = mupdf.Document.openDocument(bytes, "application/pdf");
+    const pageCount = doc.countPages();
+    const dataUrls: string[] = [];
+    const pageTexts: string[] = [];
 
-      for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-        const page = await pdfDoc.getPage(pageNum);
+    // Scale 1.5 corresponds to ~150 DPI crisp text and diagram rendering
+    const scaleMatrix = mupdf.Matrix.scale(1.5, 1.5);
 
-        // A. Extract text content
-        let pageText = "";
-        try {
-          const content = await page.getTextContent();
-          pageText = content.items
-            .map((item) => ("str" in item && typeof item.str === "string" ? item.str : ""))
-            .join(" ")
-            .replace(/\s+/g, " ")
-            .trim();
-        } catch {
-          // Ignore text errors
-        }
-        pageTexts.push(pageText);
+    for (let i = 0; i < pageCount; i++) {
+      const page = doc.loadPage(i);
 
-        // B. Render canvas PNG (150 DPI)
-        const viewport = page.getViewport({ scale: 1.5 });
-        const width = Math.max(1, Math.floor(viewport.width));
-        const height = Math.max(1, Math.floor(viewport.height));
-
-        const canvas = createCanvas(width, height);
-        const context = canvas.getContext("2d");
-
-        context.fillStyle = "#ffffff";
-        context.fillRect(0, 0, width, height);
-
-        const renderContext = {
-          canvas: canvas as unknown as HTMLCanvasElement,
-          canvasContext: context as unknown as CanvasRenderingContext2D,
-          viewport: viewport,
-        };
-
-        await (page.render as (params: unknown) => { promise: Promise<unknown> })(renderContext).promise;
-
-        const pngBuffer = canvas.toBuffer("image/png");
-        const base64Png = Buffer.from(pngBuffer).toString("base64");
-        dataUrls.push(`data:image/png;base64,${base64Png}`);
+      // A. Extract text content
+      let pageText = "";
+      try {
+        const structuredText = page.toStructuredText();
+        pageText = structuredText.asText().replace(/\s+/g, " ").trim();
+      } catch {
+        pageText = "";
       }
+      pageTexts.push(pageText);
 
-      if (dataUrls.length > 0) {
-        return { dataUrls, pageTexts };
-      }
-    } catch (canvasError) {
-      console.warn("Canvas PDF rasterization fell back to embedded extraction:", canvasError);
+      // B. Render pixmap to PNG data URL
+      const pixmap = page.toPixmap(scaleMatrix, mupdf.ColorSpace.DeviceRGB, false);
+      const pngBytes = pixmap.asPNG();
+      const base64Png = Buffer.from(pngBytes).toString("base64");
+      dataUrls.push(`data:image/png;base64,${base64Png}`);
     }
+
+    if (dataUrls.length > 0) {
+      return { dataUrls, pageTexts };
+    }
+  } catch (mupdfError) {
+    console.warn("MuPDF rendering note:", (mupdfError as Error).message);
   }
 
   // 3. Fallback: Extract embedded scan images if present
@@ -258,7 +214,7 @@ export async function processPdfDocument(
 }
 
 /**
- * Converts a raw PDF buffer or Image buffer into an array of high-resolution Data URL PNG strings (150-200 DPI).
+ * Converts a raw PDF buffer or Image buffer into an array of high-resolution Data URL PNG strings (150 DPI).
  */
 export async function convertPdfToImages(
   buffer: Buffer | Uint8Array,
