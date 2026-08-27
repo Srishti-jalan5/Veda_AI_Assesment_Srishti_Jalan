@@ -6,7 +6,6 @@ import { HeroAvatar } from "./HeroAvatar";
 import { FileDropzone } from "./FileDropzone";
 import { ErrorModal } from "../common/ErrorModal";
 import { UploadedFile } from "@/types/assessment";
-import { MOCK_QUESTION_PAPER_FILE, MOCK_ANSWER_SHEET_FILE } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 
 interface UploadScreenProps {
@@ -30,19 +29,8 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
 
   const handleStartMappingClick = (e?: React.MouseEvent) => {
     e?.preventDefault();
-    if (!questionPaperFile && !answerSheetFile) {
-      // Auto-fill default sample files and proceed immediately
-      onQuestionPaperChange(MOCK_QUESTION_PAPER_FILE);
-      onAnswerSheetChange(MOCK_ANSWER_SHEET_FILE);
-      onStartMapping();
-      return;
-    }
-    if (!questionPaperFile) {
-      setErrorMessage("Please upload a Question Paper (PDF or Image) to proceed.");
-      return;
-    }
-    if (!answerSheetFile) {
-      setErrorMessage("Please upload a Student Answer Sheet (PDF or Image) to proceed.");
+    if (!isReadyToMap) {
+      setErrorMessage("Please upload both PDF files to continue.");
       return;
     }
     onStartMapping();
@@ -142,7 +130,6 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
                 onFileSelect={onQuestionPaperChange}
                 onFileRemove={() => onQuestionPaperChange(null)}
                 onError={setErrorMessage}
-                defaultMockFile={MOCK_QUESTION_PAPER_FILE}
               />
 
               {/* Right Card: Answer Sheet Dropzone */}
@@ -154,7 +141,6 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
                 onFileSelect={onAnswerSheetChange}
                 onFileRemove={() => onAnswerSheetChange(null)}
                 onError={setErrorMessage}
-                defaultMockFile={MOCK_ANSWER_SHEET_FILE}
               />
             </div>
           </div>
@@ -162,48 +148,54 @@ export const UploadScreen: React.FC<UploadScreenProps> = ({
       </div>
 
       {/* Bottom Action Section */}
-      <div className="w-full max-w-[390px] flex flex-col items-center gap-1.5 text-center shrink-0">
-        {/* Primary Button - Dark */}
+      <div className="w-full max-w-[440px] flex flex-col items-center gap-2 text-center shrink-0">
+        {/* Primary Action Button */}
         <button
           type="button"
+          disabled={!isReadyToMap}
           onClick={handleStartMappingClick}
           style={{
-            width: "150px",
-            height: "40px",
+            minWidth: "160px",
+            height: "42px",
             borderRadius: "64px",
-            opacity: isReadyToMap ? 1 : 0.85,
           }}
           className={cn(
-            "bg-[#303030] text-white border-2 border-white/15 px-[16px] py-[8px] flex items-center justify-center gap-[6px] transition-all select-none cursor-pointer hover:bg-slate-900 active:scale-95 shadow-md hover:scale-[1.02]"
+            "px-[20px] py-[9px] flex items-center justify-center gap-[7px] transition-all select-none shadow-md",
+            isReadyToMap
+              ? "bg-[#303030] text-white border-2 border-white/15 cursor-pointer hover:bg-slate-900 active:scale-95 hover:scale-[1.02]"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed opacity-60"
           )}
         >
-          {/* Start Mapping */}
           <span
             style={{
               fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
-              fontSize: "13.5px",
+              fontSize: "14px",
               lineHeight: "140%",
               letterSpacing: "-0.03em",
-              color: "#FFFFFF",
             }}
             className="font-medium flex items-center text-center shrink-0 pointer-events-none"
           >
             Start Mapping
           </span>
 
-          <ArrowRight className="w-[15px] h-[15px] text-white shrink-0 pointer-events-none" strokeWidth={2.2} />
+          <ArrowRight
+            className="w-[15px] h-[15px] shrink-0 pointer-events-none"
+            strokeWidth={2.2}
+          />
         </button>
 
-        {/* Footnote */}
+        {/* Prompt / Guidance */}
         <p
           style={{
             fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
             letterSpacing: "-0.03em",
-            color: "rgba(94, 94, 94, 0.8)",
+            color: isReadyToMap ? "rgba(94, 94, 94, 0.85)" : "#D94A1F",
           }}
-          className="font-normal text-xs sm:text-[12.5px] leading-tight text-center"
+          className="font-normal text-xs sm:text-[13px] leading-tight text-center"
         >
-          Once both files are uploaded, you’ll able to map answers with questions
+          {isReadyToMap
+            ? "Both files uploaded. Click Start Mapping to begin evaluation."
+            : "Please upload both the Question Paper and Answer Sheet to begin."}
         </p>
       </div>
     </div>

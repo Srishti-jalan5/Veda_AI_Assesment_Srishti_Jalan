@@ -1,27 +1,66 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 interface ProcessingScreenProps {
   onComplete: () => void;
   autoCompleteDurationMs?: number;
+  currentStageMessage?: string;
+  progressPercent?: number;
 }
+
+const STAGES = [
+  { message: "Ingesting & validating documents...", targetProgress: 25 },
+  { message: "Extracting questions & rubric...", targetProgress: 55 },
+  { message: "Reading handwriting & OCR...", targetProgress: 80 },
+  { message: "Matching answers with questions...", targetProgress: 98 },
+];
 
 export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
   onComplete,
-  autoCompleteDurationMs = 2500,
+  autoCompleteDurationMs = 2800,
+  currentStageMessage,
+  progressPercent,
 }) => {
+  const [internalProgress, setInternalProgress] = useState(15);
+  const [internalStageIndex, setInternalStageIndex] = useState(0);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Increment internal progress over duration
+    const intervalTime = 120;
+    const totalSteps = autoCompleteDurationMs / intervalTime;
+    const increment = 100 / totalSteps;
+
+    const timer = setInterval(() => {
+      setInternalProgress((prev) => {
+        const next = Math.min(prev + increment, 98);
+
+        if (next >= 80) setInternalStageIndex(3);
+        else if (next >= 55) setInternalStageIndex(2);
+        else if (next >= 25) setInternalStageIndex(1);
+        else setInternalStageIndex(0);
+
+        return next;
+      });
+    }, intervalTime);
+
+    const completionTimer = setTimeout(() => {
+      setInternalProgress(100);
       onComplete();
     }, autoCompleteDurationMs);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(completionTimer);
+    };
   }, [onComplete, autoCompleteDurationMs]);
+
+  const activeProgress = progressPercent !== undefined ? progressPercent : internalProgress;
+  const activeMessage = currentStageMessage || STAGES[internalStageIndex]?.message || "Extracting...";
 
   return (
     <div className="w-full h-full flex items-center justify-center select-none animate-in fade-in duration-300">
-      {/* Expanded Sharp Extracting Card (Fills space till navbar & sidebar, sharp 8px radius) */}
+      {/* Expanded Sharp Extracting Card */}
       <div
         style={{
           width: "100%",
@@ -31,8 +70,8 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
         }}
         className="flex flex-col justify-center items-center shadow-xs border border-slate-200/60 p-6"
       >
-        {/* AnalysingLoader Container (Width: 140px, Gap: 10px) */}
-        <div className="flex flex-col justify-center items-center gap-[10px]">
+        {/* AnalysingLoader Container */}
+        <div className="flex flex-col justify-center items-center gap-[14px] max-w-[420px] w-full">
           {/* Sparkle Vector Graphic Cluster (Width: 98px, Height: 104px) */}
           <div className="relative w-[98px] h-[104px] flex items-center justify-center">
             {/* Top-Right Primary Star (58px × 58px) */}
@@ -105,8 +144,8 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
           </div>
 
           {/* Text Group */}
-          <div className="flex flex-col items-center text-center gap-0.5">
-            {/* Extracting... (22px Bold, Gradient Fill) */}
+          <div className="flex flex-col items-center text-center gap-1 w-full">
+            {/* Extracting... Title */}
             <h2
               style={{
                 fontFamily: "var(--font-bricolage), sans-serif",
@@ -125,19 +164,46 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
               Extracting...
             </h2>
 
-            {/* This may take a while (14px Regular) */}
+            {/* Dynamic Step Description */}
+            <p
+              style={{
+                fontFamily: "var(--font-bricolage), sans-serif",
+                fontWeight: 500,
+                fontSize: "13.5px",
+                lineHeight: "20px",
+                letterSpacing: "-0.03em",
+                color: "#FF5623",
+              }}
+              className="transition-all duration-200"
+            >
+              {activeMessage}
+            </p>
+
+            {/* Subtitle */}
             <p
               style={{
                 fontFamily: "var(--font-bricolage), sans-serif",
                 fontWeight: 400,
-                fontSize: "14px",
-                lineHeight: "20px",
+                fontSize: "12.5px",
+                lineHeight: "18px",
                 letterSpacing: "-0.03em",
-                color: "rgba(70, 70, 70, 0.75)",
+                color: "rgba(70, 70, 70, 0.65)",
               }}
             >
-              This may take a while
+              This may take a few moments
             </p>
+
+            {/* Progress Bar Track */}
+            <div className="w-full max-w-[280px] h-[5px] bg-slate-100 rounded-full overflow-hidden mt-3 border border-slate-200/60">
+              <div
+                style={{
+                  width: `${activeProgress}%`,
+                  background: "linear-gradient(90deg, #FF7B54 0%, #FF5623 100%)",
+                  boxShadow: "0px 0px 8px rgba(255, 86, 35, 0.5)",
+                }}
+                className="h-full rounded-full transition-all duration-200 ease-out"
+              />
+            </div>
           </div>
         </div>
       </div>

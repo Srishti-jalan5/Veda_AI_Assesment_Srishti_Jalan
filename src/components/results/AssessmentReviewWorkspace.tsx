@@ -1,38 +1,100 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QuestionPanel } from "./QuestionPanel";
-import { AnswerSheetViewer } from "./AnswerSheetViewer";
-import { REFERENCE_QUESTIONS } from "@/lib/mockData";
+import { AnswerViewer } from "@/components/viewer/AnswerViewer";
 import { QuestionItem } from "@/types/assessment";
-import { ListOrdered, FileText } from "lucide-react";
+import { HandwrittenAnswerBlock } from "@/lib/ai/answer-extractor";
+import { QuestionMapping } from "@/lib/ai/matcher";
+import { ListOrdered, FileText, UploadCloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AssessmentReviewWorkspaceProps {
+  questions?: QuestionItem[];
+  mappings?: QuestionMapping[];
+  unmappedAnswers?: HandwrittenAnswerBlock[];
+  pageImages?: string[];
   initialSelectedQuestionId?: string;
+  onGoToUpload?: () => void;
 }
 
 export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps> = ({
-  initialSelectedQuestionId = "q-2",
+  questions: propQuestions,
+  pageImages,
+  initialSelectedQuestionId,
+  onGoToUpload,
 }) => {
-  const [questions] = useState<QuestionItem[]>(REFERENCE_QUESTIONS);
-  const [selectedQuestionId, setSelectedQuestionId] = useState<string>(
-    initialSelectedQuestionId
+  const activeQuestions = React.useMemo(
+    () => propQuestions || [],
+    [propQuestions]
   );
 
-  // Phone Frame State: 'question_toggle' vs 'answer_toggle'
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string>(
+    initialSelectedQuestionId || activeQuestions[0]?.id || ""
+  );
+
+  // Synchronize selected question whenever new questions are loaded
+  useEffect(() => {
+    if (activeQuestions.length > 0) {
+      setSelectedQuestionId(activeQuestions[0]?.id || "");
+    }
+  }, [activeQuestions]);
+
+  // Mobile Top Tab: 'question' vs 'answer'
   const [mobileActiveToggle, setMobileActiveToggle] = useState<"question" | "answer">("question");
 
   const selectedQuestion =
-    questions.find((q) => q.id === selectedQuestionId) || questions[1] || questions[0];
+    activeQuestions.find((q) => q.id === selectedQuestionId) || activeQuestions[0] || null;
 
   const handleSelectQuestion = (question: QuestionItem) => {
     setSelectedQuestionId(question.id);
   };
 
+  const totalPages =
+    pageImages && pageImages.length > 0
+      ? pageImages.length
+      : Math.max(...activeQuestions.map((q) => q.answerPage || 1), 1);
+
+  // Empty / Unuploaded State Handling
+  if (activeQuestions.length === 0) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center select-none animate-in fade-in duration-200">
+        <div className="max-w-md bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center text-[#FF5623] shadow-xs">
+            <UploadCloud className="w-7 h-7" />
+          </div>
+          <div className="space-y-1">
+            <h3
+              style={{
+                fontFamily: "var(--font-bricolage), sans-serif",
+                fontWeight: 700,
+                fontSize: "18px",
+                letterSpacing: "-0.03em",
+                color: "#2B2B2B",
+              }}
+            >
+              No Assessment Data Available
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed max-w-xs">
+              Please upload both the Question Paper and Student Answer Sheet PDF to begin evaluation.
+            </p>
+          </div>
+          {onGoToUpload && (
+            <button
+              onClick={onGoToUpload}
+              className="mt-2 bg-[#303030] text-white px-5 py-2.5 rounded-full text-xs font-bold hover:bg-slate-900 active:scale-95 transition-all shadow-xs"
+            >
+              Upload Documents
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden select-none">
-      {/* Mobile Top Segmented Control (Phone Frames: Question Toggle vs Answer Toggle) */}
+      {/* Mobile Top Segmented Control */}
       <div className="lg:hidden px-3 py-2 bg-white/80 backdrop-blur-xs border-b border-slate-200 shrink-0">
         <div className="flex items-center bg-slate-100 p-1 rounded-2xl">
           <button
@@ -45,7 +107,7 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
             )}
           >
             <ListOrdered className="w-3.5 h-3.5" />
-            <span>Questions ({questions.length})</span>
+            <span>Questions ({activeQuestions.length})</span>
           </button>
 
           <button
@@ -58,35 +120,39 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
             )}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Answer Sheet (Q{selectedQuestion.questionNumber})</span>
+            <span>Answer Sheet</span>
           </button>
         </div>
       </div>
 
-      {/* Main Container Area */}
-      <div className="flex-1 min-h-0 p-2 sm:p-3 md:p-4 flex flex-col lg:flex-row gap-3 md:gap-4 overflow-hidden">
-        {/* Left Column: Extracted Questions List Panel (~42% on desktop, visible on phone when question toggle is active) */}
+      {/* Main Split-View Workspace (Left: QuestionPanel 480px, Right: AnswerViewer) */}
+      <div className="flex-1 flex flex-row overflow-hidden p-3 gap-3">
+        {/* Left Side: Question List & Rubric Panel */}
         <div
           className={cn(
-            "w-full lg:w-[42%] xl:w-[40%] h-full shrink-0 overflow-hidden",
-            mobileActiveToggle === "question" ? "flex" : "hidden lg:flex"
+            "w-full lg:w-[480px] h-full shrink-0 flex flex-col",
+            mobileActiveToggle === "answer" ? "hidden lg:flex" : "flex"
           )}
         >
           <QuestionPanel
-            questions={questions}
+            questions={activeQuestions}
             selectedQuestionId={selectedQuestionId}
             onSelectQuestion={handleSelectQuestion}
           />
         </div>
 
-        {/* Right Column: Large Student Answer Sheet Viewer (~58% on desktop, visible on phone when answer toggle is active) */}
+        {/* Right Side: Interactive Answer Sheet Document Viewer with Highlights */}
         <div
           className={cn(
-            "w-full lg:w-[58%] xl:w-[60%] h-full flex-1 overflow-hidden",
-            mobileActiveToggle === "answer" ? "flex" : "hidden lg:flex"
+            "flex-1 h-full min-w-0 flex flex-col",
+            mobileActiveToggle === "question" ? "hidden lg:flex" : "flex"
           )}
         >
-          <AnswerSheetViewer selectedQuestion={selectedQuestion} />
+          <AnswerViewer
+            selectedQuestion={selectedQuestion}
+            pageImages={pageImages}
+            totalPages={totalPages}
+          />
         </div>
       </div>
     </div>

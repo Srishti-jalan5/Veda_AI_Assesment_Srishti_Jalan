@@ -13,7 +13,6 @@ interface FileDropzoneProps {
   onFileSelect: (file: UploadedFile) => void;
   onFileRemove: () => void;
   onError?: (errorMessage: string) => void;
-  defaultMockFile?: UploadedFile;
 }
 
 export const FileDropzone: React.FC<FileDropzoneProps> = ({
@@ -24,7 +23,6 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
   onFileSelect,
   onFileRemove,
   onError,
-  defaultMockFile,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,35 +63,32 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
       return;
     }
 
-    const sizeInMB = (fileItem.size / (1024 * 1024)).toFixed(0);
-    const estimatedPages = Math.max(1, Math.ceil(fileItem.size / (1.5 * 1024 * 1024)));
+    const sizeInMB = (fileItem.size / (1024 * 1024)).toFixed(1);
+    const isImage = fileItem.type.startsWith("image/");
+    const estimatedPages = isImage ? 1 : Math.max(1, Math.ceil(fileItem.size / (1.5 * 1024 * 1024)));
 
     const newUploadedFile: UploadedFile = {
       id: `${type}-${Date.now()}`,
       name: fileItem.name,
-      sizeFormatted: `${sizeInMB === "0" ? "<1" : sizeInMB}MB`,
+      sizeFormatted: `${sizeInMB === "0.0" ? "<0.1" : sizeInMB}MB`,
       sizeBytes: fileItem.size,
       pages: estimatedPages,
       type: type,
       uploadDate: new Date().toISOString().split("T")[0],
+      fileBlob: fileItem,
     };
 
     onFileSelect(newUploadedFile);
   };
 
-  const handlePresetSampleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (defaultMockFile) {
-      onFileSelect(defaultMockFile);
-    }
-  };
+  const isImageFile = file?.name && /\.(png|jpe?g|webp)$/i.test(file.name);
 
   return (
     <div className="flex-1 w-full max-w-[345px]">
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.png,.jpg,.jpeg"
+        accept=".pdf,.png,.jpg,.jpeg,.webp"
         onChange={handleFileInputChange}
         className="hidden"
       />
@@ -134,13 +129,16 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
               }}
               className="flex flex-row items-center justify-center shrink-0 relative"
             >
-              {/* Red PDF Badge Icon (28px × 34px) */}
+              {/* Document/Image Badge Icon (28px × 34px) */}
               <div
                 style={{
                   width: "28px",
                   height: "34px",
                 }}
-                className="bg-red-500 rounded-[5px] text-white flex flex-col items-center justify-center shrink-0 shadow-xs"
+                className={cn(
+                  "rounded-[5px] text-white flex flex-col items-center justify-center shrink-0 shadow-xs",
+                  isImageFile ? "bg-blue-500" : "bg-red-500"
+                )}
               >
                 <svg
                   width="15"
@@ -155,7 +153,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
                 <span className="text-[7px] font-black tracking-tighter leading-none uppercase">
-                  PDF
+                  {isImageFile ? "IMG" : "PDF"}
                 </span>
               </div>
 
@@ -235,7 +233,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                 right: "-5px",
                 top: "-7px",
               }}
-              className="absolute flex items-center justify-center text-[#EFE4DC] hover:scale-110 active:scale-95 transition-transform z-10"
+              className="absolute flex items-center justify-center text-[#EFE4DC] hover:scale-110 active:scale-95 transition-transform z-10 cursor-pointer"
             >
               <X className="w-[11px] h-[11px]" strokeWidth={2.5} />
             </button>
@@ -276,24 +274,12 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                 }}
                 className="font-normal"
               >
-                Max 10MB
+                PDF or Image (Max 10MB)
               </p>
             </div>
           </div>
         )}
       </div>
-
-      {/* Preset sample quick-fill button */}
-      {!file && defaultMockFile && (
-        <div className="mt-1 text-center">
-          <button
-            onClick={handlePresetSampleClick}
-            className="text-[10.5px] text-slate-400 hover:text-[#FF5623] hover:underline font-medium transition-colors"
-          >
-            + Use sample &quot;{defaultMockFile.name}&quot;
-          </button>
-        </div>
-      )}
     </div>
   );
 };

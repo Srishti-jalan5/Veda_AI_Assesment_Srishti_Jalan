@@ -1,11 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
-  ExtractedAnswerSheetSchema,
   AnswerBoundingBoxSchema,
   validateExtractedAnswers,
   extractAnswersFromPages,
   AnswerExtractionError,
-  generateSampleExtractedAnswers,
   ExtractedAnswerSheet,
 } from "../src/lib/ai/answer-extractor";
 
@@ -18,7 +16,7 @@ describe("Handwritten Answer Extractor Pipeline — Unit Tests", () => {
       {
         id: "ans_1",
         detected_question_label: "Ans 3",
-        handwritten_text: "Chloroplasts contain chlorophyll a and b pigments which absorb light energy for light and dark reactions.",
+        handwritten_text: "Kinetic energy equals half mass times velocity squared: KE = 1/2 * m * v^2.",
         page_number: 1,
         bounding_box: { xmin: 0.05, ymin: 0.1, xmax: 0.95, ymax: 0.45 },
         confidence: 0.97,
@@ -29,7 +27,7 @@ describe("Handwritten Answer Extractor Pipeline — Unit Tests", () => {
       {
         id: "ans_2",
         detected_question_label: "1",
-        handwritten_text: "Arteries carry blood away from the heart to different body tissues.",
+        handwritten_text: "Newton's second law defines force as the product of mass and acceleration: F = ma.",
         page_number: 1,
         bounding_box: { xmin: 0.05, ymin: 0.48, xmax: 0.95, ymax: 0.7 },
         confidence: 0.99,
@@ -40,7 +38,7 @@ describe("Handwritten Answer Extractor Pipeline — Unit Tests", () => {
       {
         id: "ans_3_scratch",
         detected_question_label: null,
-        handwritten_text: "Rough: 12 * 0.35 = 4.2 L/min",
+        handwritten_text: "Rough: 12 * 0.35 = 4.2 J",
         page_number: 1,
         bounding_box: { xmin: 0.5, ymin: 0.75, xmax: 0.95, ymax: 0.95 },
         confidence: 0.92,
@@ -51,7 +49,7 @@ describe("Handwritten Answer Extractor Pipeline — Unit Tests", () => {
       {
         id: "ans_4",
         detected_question_label: "Q.2",
-        handwritten_text: "Chloroplast organelle is primarily responsible for photosynthesis in plant cells. Diagram shows thylakoids and stroma.",
+        handwritten_text: "In series circuits, current remains uniform across all resistors while voltage drops add up.",
         page_number: 2,
         bounding_box: { xmin: 0.05, ymin: 0.08, xmax: 0.95, ymax: 0.6 },
         confidence: 0.98,
@@ -161,12 +159,14 @@ describe("Handwritten Answer Extractor Pipeline — Unit Tests", () => {
       expect(result.metadata.page_count).toBe(2);
     });
 
-    it("should generate deterministic fallback payload adhering to the schema", () => {
-      const sample = generateSampleExtractedAnswers(4);
-      const parsed = ExtractedAnswerSheetSchema.parse(sample);
+    it("should throw an explicit error when API key is missing", async () => {
+      const pages = [
+        { pageNumber: 1, dataUrl: "data:image/jpeg;base64,/9j/4AAQSkZJRg==" },
+      ];
 
-      expect(parsed.answers.length).toBeGreaterThanOrEqual(4);
-      expect(parsed.total_pages_scanned).toBe(4);
+      await expect(
+        extractAnswersFromPages(pages, { apiKey: "" })
+      ).rejects.toThrow(/Answer Extraction Failed/);
     });
   });
 });

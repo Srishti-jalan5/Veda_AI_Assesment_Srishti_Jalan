@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNavbar } from "@/components/layout/TopNavbar";
 import { UploadScreen } from "@/components/upload/UploadScreen";
 import { ProcessingScreen } from "@/components/processing/ProcessingScreen";
 import { AssessmentReviewWorkspace } from "@/components/results/AssessmentReviewWorkspace";
-import { UploadedFile } from "@/types/assessment";
+import { ErrorModal } from "@/components/common/ErrorModal";
+import { UploadedFile, AssessmentProcessResponse } from "@/types/assessment";
 
 export default function Home() {
   // Workflow State Machine: 'upload' | 'processing' | 'results'
@@ -16,12 +17,12 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("Exams");
 
-  // Automatically adjust default sidebar expansion according to the authoritative Figma frame
+  // Automatically adjust default sidebar expansion according to the authoritative frame
   useEffect(() => {
     if (currentStep === "upload") {
       setSidebarCollapsed(false); // Expanded sidebar on Desktop Upload frames
     } else if (currentStep === "results" || currentStep === "processing") {
-      setSidebarCollapsed(true);  // Narrow rail on Desktop Mapping & Loading frames
+      setSidebarCollapsed(true); // Narrow rail on Desktop Mapping & Loading frames
     }
   }, [currentStep]);
 
@@ -29,13 +30,82 @@ export default function Home() {
   const [questionPaperFile, setQuestionPaperFile] = useState<UploadedFile | null>(null);
   const [answerSheetFile, setAnswerSheetFile] = useState<UploadedFile | null>(null);
 
-  const handleStartMapping = () => {
+  // Dynamic Processed Assessment Response State
+  const [processedAssessment, setProcessedAssessment] = useState<AssessmentProcessResponse | null>(null);
+  const [processingError, setProcessingError] = useState<string | null>(null);
+  const apiCallPendingRef = useRef<boolean>(false);
+
+  const handleStartMapping = async () => {
+    // 1. Validate that both files are selected
+    if (!questionPaperFile?.fileBlob || !answerSheetFile?.fileBlob) {
+      setProcessingError("Please upload both PDF files to continue.");
+      return;
+    }
+
+    // 2. Clear previous state and transition to processing screen
+    setProcessedAssessment(null);
+    setProcessingError(null);
     setCurrentStep("processing");
+
+    if (apiCallPendingRef.current) return;
+    apiCallPendingRef.current = true;
+
+    try {
+      // 3. Create FormData and append both files
+      const formData = new FormData();
+      formData.append(
+        "question_paper",
+        questionPaperFile.fileBlob,
+        questionPaperFile.name
+      );
+      formData.append(
+        "answer_sheet",
+        answerSheetFile.fileBlob,
+        answerSheetFile.name
+      );
+
+      // 4. Send POST request to /api/process-assessment
+      const res = await fetch("/api/process-assessment", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to process assessment document.");
+      }
+
+      // 5. Update active state with purely extracted data
+      setProcessedAssessment(data);
+    } catch (err) {
+      console.error("Assessment processing error:", err);
+      setProcessingError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while evaluating the assessment files."
+      );
+      setCurrentStep("upload");
+    } finally {
+      apiCallPendingRef.current = false;
+    }
   };
 
   const handleProcessingComplete = () => {
-    setCurrentStep("results");
+    if (processedAssessment) {
+      setCurrentStep("results");
+    }
   };
+
+  // Transition to results screen once processing animation & API data are ready
+  useEffect(() => {
+    if (currentStep === "processing" && processedAssessment) {
+      const timer = setTimeout(() => {
+        setCurrentStep("results");
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, processedAssessment]);
 
   const handleBackToUpload = () => {
     setCurrentStep("upload");
@@ -51,9 +121,14 @@ export default function Home() {
       }}
       className="relative h-screen w-screen flex flex-row text-slate-900 font-sans overflow-hidden selection:bg-orange-100 selection:text-orange-900"
     >
-      {/* Figma Ambient Background Blurred Ellipses (Ellipse 17 & Ellipse 16) */}
+      <ErrorModal
+        isOpen={!!processingError}
+        message={processingError || ""}
+        onClose={() => setProcessingError(null)}
+      />
+
+      {/* Ambient Background Blurred Ellipses */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        {/* Ellipse 17 */}
         <div
           style={{
             width: "1318px",
@@ -65,7 +140,6 @@ export default function Home() {
           }}
           className="absolute rounded-full"
         />
-        {/* Ellipse 16 */}
         <div
           style={{
             width: "1113px",
@@ -89,9 +163,9 @@ export default function Home() {
 
       {/* Main Content Workspace */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden z-10">
-        {/* Compact Top Navigation Bar */}
+        {/* Top Navigation Bar */}
         <TopNavbar
-          showBackButton={true}
+          showBackButton={currentStep !== "upload"}
           onBack={handleBackToUpload}
           breadcrumbTitle={activeNav}
           activeNav={activeNav}
@@ -116,14 +190,23 @@ export default function Home() {
             <div className="w-full h-full flex items-center justify-center p-2.5 pt-2 pb-3 pr-3 pl-2">
               <ProcessingScreen
                 onComplete={handleProcessingComplete}
-                autoCompleteDurationMs={2500}
+                autoCompleteDurationMs={2200}
               />
             </div>
           )}
 
           {currentStep === "results" && (
             <div className="w-full h-full flex items-center justify-center p-1 sm:p-2 overflow-hidden">
-              <AssessmentReviewWorkspace initialSelectedQuestionId="q-2" />
+              <AssessmentReviewWorkspace
+                questions={processedAssessment?.questions}
+                mappings={processedAssessment?.mappings}
+                unmappedAnswers={processedAssessment?.unmapped_answers}
+                pageImages={processedAssessment?.page_images?.answer_sheet}
+                initialSelectedQuestionId={
+                  processedAssessment?.questions?.[0]?.id || "q-1"
+                }
+                onGoToUpload={handleBackToUpload}
+              />
             </div>
           )}
         </main>

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { QuestionItem } from "@/types/assessment";
+import { GradePanel } from "@/components/grading/GradePanel";
 import { cn } from "@/lib/utils";
 
 interface QuestionPanelProps {
@@ -239,43 +240,15 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
                 </div>
               </div>
 
-              {/* AI Feedback Card (Expanded State) */}
-              {isExpanded && q.aiFeedback && (
-                <div
-                  style={{
-                    background: "#F6F6F6",
-                    borderRadius: "12px",
-                    padding: "12px 18px",
-                  }}
-                  className="mt-[6px] flex flex-col gap-[6px] animate-in fade-in zoom-in-95 duration-150"
-                >
-                  {/* AI Feedback Title */}
-                  <h4
-                    style={{
-                      fontFamily: "var(--font-bricolage), sans-serif",
-                      fontWeight: 700,
-                      fontSize: "14px",
-                      lineHeight: "140%",
-                      letterSpacing: "-0.03em",
-                      color: "#303030",
-                    }}
-                  >
-                    AI Feedback
-                  </h4>
-
-                  {/* Feedback Text */}
-                  <p
-                    style={{
-                      fontFamily: "var(--font-bricolage), sans-serif",
-                      fontWeight: 400,
-                      fontSize: "13px",
-                      lineHeight: "140%",
-                      letterSpacing: "-0.03em",
-                      color: "#303030",
-                    }}
-                  >
-                    {q.aiFeedback}
-                  </p>
+              {/* AI Feedback & Grading Card (Expanded State) */}
+              {isExpanded && (
+                <div className="mt-2 animate-in fade-in zoom-in-95 duration-150">
+                  <GradePanel
+                    maxMarks={q.maxMarks}
+                    awardedMarks={q.awardedMarks}
+                    aiFeedback={q.aiFeedback}
+                    status={q.status || (q.awardedMarks === q.maxMarks ? "matched" : q.awardedMarks > 0 ? "uncertain" : "unanswered")}
+                  />
                 </div>
               )}
             </div>

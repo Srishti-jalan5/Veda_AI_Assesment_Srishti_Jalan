@@ -1,18 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
-  ExtractedQuestionPaperSchema,
   BoundingBoxSchema,
   validateExtractedQuestions,
   extractQuestionsFromPages,
   normalizeSubQuestionHierarchy,
   QuestionExtractionError,
-  generateSampleExtractedPayload,
   ExtractedQuestionPaper,
 } from "../src/lib/ai/question-extractor";
 
 describe("Question Extractor Pipeline — Unit Tests", () => {
   const validMockPayload: ExtractedQuestionPaper = {
-    assessment_title: "Class 10 Biology Unit Test",
+    assessment_title: "Standard Assessment Unit Test",
     total_marks: 25,
     instructions: ["Attempt all questions.", "Each question carries marks indicated in brackets."],
     questions: [
@@ -20,7 +18,7 @@ describe("Question Extractor Pipeline — Unit Tests", () => {
         id: "q_1",
         question_number: "1",
         parent_question_number: null,
-        text: "Which blood vessel carries blood away from the heart?",
+        text: "Define kinetic energy and state its standard SI unit.",
         max_marks: 2,
         page_number: 1,
         bounding_box: { xmin: 0.05, ymin: 0.08, xmax: 0.95, ymax: 0.16 },
@@ -30,7 +28,7 @@ describe("Question Extractor Pipeline — Unit Tests", () => {
         id: "q_2",
         question_number: "2",
         parent_question_number: null,
-        text: "Which of the following organelles is primarily involved in photosynthesis?",
+        text: "State Newton's Second Law of Motion and derive the formula F = ma.",
         max_marks: 2,
         page_number: 1,
         bounding_box: { xmin: 0.05, ymin: 0.18, xmax: 0.95, ymax: 0.26 },
@@ -40,7 +38,7 @@ describe("Question Extractor Pipeline — Unit Tests", () => {
         id: "q_11a",
         question_number: "11(a)",
         parent_question_number: "11",
-        text: "A diagram shows two potted plants — Plant A in bright light with broad green leaves, Plant B kept in dim light with pale, elongated leaves.",
+        text: "Analyze the circuit diagram shown and calculate the total equivalent resistance.",
         max_marks: 2,
         page_number: 2,
         bounding_box: { xmin: 0.05, ymin: 0.65, xmax: 0.95, ymax: 0.76 },
@@ -50,7 +48,7 @@ describe("Question Extractor Pipeline — Unit Tests", () => {
         id: "q_11b",
         question_number: "11(b)",
         parent_question_number: "11",
-        text: "Suggest one practical measure to help Plant B recover.",
+        text: "Calculate the total current flowing through the circuit given a 12V power supply.",
         max_marks: 3,
         page_number: 2,
         bounding_box: { xmin: 0.05, ymin: 0.78, xmax: 0.95, ymax: 0.88 },
@@ -68,7 +66,7 @@ describe("Question Extractor Pipeline — Unit Tests", () => {
     it("should successfully validate a fully conformant question paper payload", () => {
       const parsed = validateExtractedQuestions(validMockPayload);
       expect(parsed).toBeDefined();
-      expect(parsed.assessment_title).toBe("Class 10 Biology Unit Test");
+      expect(parsed.assessment_title).toBe("Standard Assessment Unit Test");
       expect(parsed.questions).toHaveLength(4);
       expect(parsed.questions[0].id).toBe("q_1");
       expect(parsed.questions[0].max_marks).toBe(2);
@@ -222,12 +220,14 @@ describe("Question Extractor Pipeline — Unit Tests", () => {
       expect(result.metadata.page_count).toBe(2);
     });
 
-    it("should generate deterministic fallback payload adhering to the schema", () => {
-      const sample = generateSampleExtractedPayload(3);
-      const parsed = ExtractedQuestionPaperSchema.parse(sample);
+    it("should throw an explicit error when API key is missing", async () => {
+      const pages = [
+        { pageNumber: 1, dataUrl: "data:image/jpeg;base64,/9j/4AAQSkZJRg==" },
+      ];
 
-      expect(parsed.questions.length).toBeGreaterThanOrEqual(5);
-      expect(parsed.metadata.page_count).toBe(3);
+      await expect(
+        extractQuestionsFromPages(pages, { apiKey: "" })
+      ).rejects.toThrow(/Question Extraction Failed/);
     });
   });
 });

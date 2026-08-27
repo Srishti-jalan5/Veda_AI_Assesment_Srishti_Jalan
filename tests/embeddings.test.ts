@@ -43,7 +43,7 @@ describe("Embeddings & Cosine Similarity Service — Unit Tests", () => {
 
   describe("2. Embedding Generation & In-Memory Session Caching", () => {
     it("should generate a normalized dense vector for valid text", async () => {
-      const text = "Explain the role of chloroplasts in photosynthesis";
+      const text = "State and explain the law of conservation of energy";
       const embedding = await generateEmbedding(text);
 
       expect(Array.isArray(embedding)).toBe(true);
@@ -66,12 +66,12 @@ describe("Embeddings & Cosine Similarity Service — Unit Tests", () => {
     it("should cache embeddings in-memory and avoid re-computation", async () => {
       expect(getEmbeddingCacheSize()).toBe(0);
 
-      const text = "Which blood vessel carries blood away from the heart?";
+      const text = "Calculate acceleration given force and mass values";
       await generateEmbedding(text);
       expect(getEmbeddingCacheSize()).toBe(1);
 
       // Repeated call with same text (even with different casing/whitespace)
-      await generateEmbedding("  which blood vessel carries blood away from the heart?  ");
+      await generateEmbedding("  calculate acceleration given force and mass values  ");
       expect(getEmbeddingCacheSize()).toBe(1);
 
       clearEmbeddingCache();
@@ -80,34 +80,34 @@ describe("Embeddings & Cosine Similarity Service — Unit Tests", () => {
   });
 
   describe("3. Pairwise Similarity Matrix & Mapping", () => {
-    const mockQuestions: QuestionInput[] = [
+    const testQuestions: QuestionInput[] = [
       {
         id: "q_1",
         question_number: "1",
-        text: "Which blood vessel carries blood away from the heart?",
+        text: "Calculate acceleration from force and mass using F equals ma.",
       },
       {
         id: "q_2",
         question_number: "2",
-        text: "Which organelle is primarily involved in photosynthesis?",
+        text: "Explain the law of conservation of linear momentum during collisions.",
       },
       {
         id: "q_3",
         question_number: "3",
-        text: "Draw a labelled diagram of an alveolus showing gas exchange in capillaries.",
+        text: "Describe heat conduction in solids and thermal conductivity.",
       },
     ];
 
-    const mockAnswers: AnswerBlockInput[] = [
+    const testAnswers: AnswerBlockInput[] = [
       {
         id: "ans_a",
         detected_question_label: "Q2",
-        handwritten_text: "Photosynthesis occurs in the chloroplast organelle with chlorophyll pigments.",
+        handwritten_text: "Conservation of linear momentum states that total momentum before collision equals total momentum after collision.",
       },
       {
         id: "ans_b",
         detected_question_label: "1",
-        handwritten_text: "Arteries carry oxygenated blood away from the heart to body organs.",
+        handwritten_text: "Acceleration equals force divided by mass according to formula F equals ma.",
       },
       {
         id: "ans_c_empty",
@@ -117,7 +117,7 @@ describe("Embeddings & Cosine Similarity Service — Unit Tests", () => {
     ];
 
     it("should compute full similarity matrix between all questions and answers", async () => {
-      const result = await computePairwiseSimilarities(mockQuestions, mockAnswers);
+      const result = await computePairwiseSimilarities(testQuestions, testAnswers);
 
       expect(result.matrix).toHaveLength(3); // 3 questions
       expect(result.matrix[0]).toHaveLength(3); // 3 answers per row
@@ -127,13 +127,13 @@ describe("Embeddings & Cosine Similarity Service — Unit Tests", () => {
     });
 
     it("should correctly identify highest semantic similarity matches", async () => {
-      const result = await computePairwiseSimilarities(mockQuestions, mockAnswers);
+      const result = await computePairwiseSimilarities(testQuestions, testAnswers);
 
-      // Q1 (Heart & blood vessels) should best match ans_b (Arteries carry blood away from heart)
+      // Q1 (Force and acceleration) should best match ans_b (Acceleration equals force divided by mass)
       expect(result.bestMatchPerQuestion["q_1"].answerId).toBe("ans_b");
       expect(result.bestMatchPerQuestion["q_1"].similarity).toBeGreaterThan(0.5);
 
-      // Q2 (Photosynthesis) should best match ans_a (Photosynthesis in chloroplast)
+      // Q2 (Momentum) should best match ans_a (Total momentum before collision)
       expect(result.bestMatchPerQuestion["q_2"].answerId).toBe("ans_a");
       expect(result.bestMatchPerQuestion["q_2"].similarity).toBeGreaterThan(0.5);
 
@@ -144,11 +144,11 @@ describe("Embeddings & Cosine Similarity Service — Unit Tests", () => {
     });
 
     it("should handle empty question or answer arrays gracefully", async () => {
-      const emptyQuestionsResult = await computePairwiseSimilarities([], mockAnswers);
+      const emptyQuestionsResult = await computePairwiseSimilarities([], testAnswers);
       expect(emptyQuestionsResult.matrix).toEqual([]);
       expect(emptyQuestionsResult.pairs).toEqual([]);
 
-      const emptyAnswersResult = await computePairwiseSimilarities(mockQuestions, []);
+      const emptyAnswersResult = await computePairwiseSimilarities(testQuestions, []);
       expect(emptyAnswersResult.matrix).toEqual([]);
       expect(emptyAnswersResult.pairs).toEqual([]);
     });

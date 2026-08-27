@@ -11,10 +11,12 @@
     "test:manual": "npx tsx scripts/manual-test.mjs"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.8",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "next": "^15.2.4",
     "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.2.108",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.0.2",
