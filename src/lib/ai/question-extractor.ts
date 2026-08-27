@@ -132,19 +132,20 @@ export class QuestionExtractionError extends Error {
 
 export const QUESTION_EXTRACTION_SYSTEM_PROMPT = `
 You are an expert AI exam analyzer and visual OCR parser.
-Your task is to extract every printed question and sub-question verbatim from the provided question paper images.
+Your task is to extract every printed question and sub-question verbatim from the provided question paper image.
 
 STRICT EXTRACTION RULES:
-1. Extract EVERY printed question, sub-question, and multi-part clause verbatim in exact printed sequence.
-2. Labeled sub-parts (e.g. "11(a)", "11(b)", "Q2.1", "Q2.2") MUST be extracted as separate independent question entries.
-3. For sub-parts, populate "parent_question_number" (e.g., "11" for "11(a)"). For top-level questions, set "parent_question_number" to null.
-4. Extract max_marks allocated if printed in brackets or margins (e.g., "[2 marks]" -> 2). If not specified, default to 2 or 5.
-5. Provide a normalized bounding box [ymin, xmin, ymax, xmax] for each question (on 0-1000 coordinate scale).
-6. Assign a confidence score between 0.0 and 1.0 for each question.
-7. Return ONLY a valid JSON object strictly matching this schema:
+1. Extract EVERY printed question, multipart sub-question (e.g., 11(a), 11(b), 12(a)), and section item on this page.
+2. Read continuously from top (ymin=0) to bottom (ymax=1000). Do not omit or truncate any questions.
+3. Treat every sub-clause/part as an independent item.
+4. For sub-parts, populate "parent_question_number" (e.g., "11" for "11(a)"). For top-level questions, set "parent_question_number" to null.
+5. Extract max_marks allocated if printed in brackets or margins (e.g., "[2 marks]" -> 2). If not specified, default to 2 or 5.
+6. Provide a normalized bounding box [ymin, xmin, ymax, xmax] for each question (on 0-1000 coordinate scale).
+7. Assign a confidence score between 0.0 and 1.0 for each question.
+8. Return ONLY a valid JSON object strictly matching this schema:
 {
-  "assessment_title": string,
-  "total_marks": number,
+  "assessment_title": string | null,
+  "total_marks": number | null,
   "instructions": string[],
   "questions": [
     {
@@ -154,7 +155,7 @@ STRICT EXTRACTION RULES:
       "text": string,
       "max_marks": number,
       "page_number": number,
-      "bounding_box": { "xmin": number, "ymin": number, "xmax": number, "ymax": number },
+      "bounding_box": { "ymin": number, "xmin": number, "ymax": number, "xmax": number },
       "confidence": number
     }
   ]
@@ -192,7 +193,7 @@ export function normalizeSubQuestionHierarchy(
 }
 
 // ==========================================
-// 5. Main Extraction Pipeline Function
+// 5. Validation Helper
 // ==========================================
 
 export function validateExtractedQuestions(rawPayload: unknown): ExtractedQuestionPaper {
@@ -200,7 +201,7 @@ export function validateExtractedQuestions(rawPayload: unknown): ExtractedQuesti
     const parsed = ExtractedQuestionPaperSchema.parse(rawPayload);
     const questionsWithHierarchy = normalizeSubQuestionHierarchy(parsed.questions);
     const totalMarks =
-      parsed.total_marks !== undefined
+      parsed.total_marks !== undefined && parsed.total_marks !== null
         ? parsed.total_marks
         : questionsWithHierarchy.reduce((sum, q) => sum + (q.max_marks || 0), 0);
 
@@ -234,8 +235,140 @@ export function validateExtractedQuestions(rawPayload: unknown): ExtractedQuesti
 }
 
 /**
- * Sends question paper page images/text to the LLM (Groq / Gemini / OpenAI)
- * and extracts verbatim questions and normalized bounding boxes.
+ * Extracts all questions and clauses from a single Question Paper page.
+ */
+async function extractQuestionsFromSinglePage(
+  page: QuestionPaperPageInput,
+  options: QuestionExtractionOptions = {}
+): Promise<ExtractedQuestionItem[]> {
+  const groqApiKey =
+    typeof process !== "undefined" ? process.env.GROQ_API_KEY : undefined;
+  const geminiApiKey =
+    options.apiKey ||
+    (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : undefined);
+
+  // 1. Text-only path via Groq if digital text is present
+  if (groqApiKey && page.extractedText && page.extractedText.trim().length > 30 && !page.dataUrl?.startsWith("data:image/png")) {
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: QUESTION_EXTRACTION_SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: `Extract all questions from Question Paper Page ${page.pageNumber} text:\n\n${page.extractedText}`,
+            },
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const rawJsonText = data.choices?.[0]?.message?.content;
+        if (rawJsonText) {
+          const parsed = JSON.parse(rawJsonText);
+          const validated = validateExtractedQuestions(parsed);
+          return validated.questions.map((q, idx) => ({
+            ...q,
+            id: `q_p${page.pageNumber}_${idx + 1}`,
+            page_number: page.pageNumber,
+          }));
+        }
+      }
+    } catch {
+      // Fallback to Vision
+    }
+  }
+
+  // 2. Multimodal Vision Path via Gemini
+  if (geminiApiKey) {
+    const candidateModels = [
+      "gemini-3.5-flash-lite",
+      "gemini-3.6-flash",
+      "gemini-3.1-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-flash-latest",
+    ];
+
+    const parts: Array<Record<string, unknown>> = [
+      { text: QUESTION_EXTRACTION_SYSTEM_PROMPT },
+    ];
+
+    const base64Data = page.imageBase64 || page.dataUrl?.split(",")[1] || "";
+    let mime = page.mimeType || "image/png";
+    if (page.dataUrl?.startsWith("data:")) {
+      const match = page.dataUrl.match(/^data:([^;]+);/);
+      if (match) mime = match[1];
+    }
+
+    if (mime.startsWith("image/") && !mime.includes("svg") && base64Data.length > 50) {
+      parts.push({
+        inlineData: {
+          mimeType: mime === "image/png" ? "image/png" : "image/jpeg",
+          data: base64Data,
+        },
+      });
+    }
+
+    if (page.extractedText && page.extractedText.trim().length > 10) {
+      parts.push({
+        text: `--- Question Paper Page ${page.pageNumber} Text Content ---\n${page.extractedText}`,
+      });
+    }
+
+    parts.push({
+      text: `Extract every question, multipart sub-clause, and question label on Page ${page.pageNumber}. Return strict JSON.`,
+    });
+
+    for (const model of candidateModels) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts }],
+              generationConfig: {
+                responseMimeType: "application/json",
+              },
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawJsonText) {
+            const parsed = JSON.parse(rawJsonText);
+            const validated = validateExtractedQuestions(parsed);
+            return validated.questions.map((q, idx) => ({
+              ...q,
+              id: q.id || `q_p${page.pageNumber}_${idx + 1}`,
+              page_number: page.pageNumber,
+            }));
+          }
+        }
+      } catch {
+        // Try next candidate model
+      }
+    }
+  }
+
+  return [];
+}
+
+/**
+ * Dynamically iterates through every Question Paper page (1...N) and extracts all questions.
+ * Flattens all extracted questions into a unified array.
  */
 export async function extractQuestionsFromPages(
   pages: QuestionPaperPageInput[],
@@ -258,242 +391,59 @@ export async function extractQuestionsFromPages(
   const geminiApiKey =
     options.apiKey ||
     (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : undefined);
-  const openaiApiKey =
-    options.apiKey ||
-    (typeof process !== "undefined" ? process.env.OPENAI_API_KEY : undefined);
 
-  if (!groqApiKey && !geminiApiKey && !openaiApiKey) {
+  if (!groqApiKey && !geminiApiKey) {
     throw new QuestionExtractionError(
       "Question Extraction Failed: Missing API Key. Please set GEMINI_API_KEY or GROQ_API_KEY in your environment.",
       "MISSING_API_KEY"
     );
   }
 
-  // Has extracted text from PDF
-  const combinedText = pages
-    .map((p) => p.extractedText?.trim())
-    .filter(Boolean)
-    .join("\n\n");
+  // Process all N pages dynamically in parallel
+  const pagePromises = pages.map((page) => extractQuestionsFromSinglePage(page, options));
+  const pageQuestionsArrays = await Promise.all(pagePromises);
+  const allQuestions = pageQuestionsArrays.flat();
 
-  // 1. If Groq API Key is available and we have extracted text from PDF, use fast Groq inference
-  if (groqApiKey && combinedText.length > 20) {
-    try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${groqApiKey}`,
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: QUESTION_EXTRACTION_SYSTEM_PROMPT },
-            {
-              role: "user",
-              content: `Extract all questions and structure from this question paper:\n\n${combinedText}`,
-            },
-          ],
-        }),
-      });
+  if (allQuestions.length > 0) {
+    const questionsWithHierarchy = normalizeSubQuestionHierarchy(allQuestions);
+    const totalMarks = questionsWithHierarchy.reduce((sum, q) => sum + (q.max_marks || 0), 0);
 
-      if (response.ok) {
-        const data = await response.json();
-        const rawJsonText = data.choices?.[0]?.message?.content;
-        if (rawJsonText) {
-          const parsed = JSON.parse(rawJsonText);
-          return validateExtractedQuestions(parsed);
-        }
-      }
-    } catch (err) {
-      console.warn("Groq text extraction fallback to Gemini:", (err as Error).message);
-    }
-  }
-
-  // 2. If Gemini API Key is available (Multimodal Vision / Text)
-  if (geminiApiKey) {
-    const candidateModels = [
-      "gemini-3.5-flash-lite",
-      "gemini-3.6-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-3.5-flash",
-      "gemini-3.7-flash",
-      "gemini-flash-latest",
-      "gemini-flash-lite-latest",
-      "gemini-3-flash-preview",
-      "gemini-pro-latest",
-      "gemini-3.1-pro-preview",
-    ];
-
-    let lastError: Error | null = null;
-
-    // Build Gemini contents parts
-    const parts: Array<Record<string, unknown>> = [{ text: QUESTION_EXTRACTION_SYSTEM_PROMPT }];
-
-    for (const p of pages) {
-      let pageHasContent = false;
-
-      if (p.extractedText && p.extractedText.trim().length > 10) {
-        parts.push({
-          text: `--- Question Paper Page ${p.pageNumber} Content ---\n${p.extractedText}`,
-        });
-        pageHasContent = true;
-      } else {
-        const base64Data = p.imageBase64 || p.dataUrl?.split(",")[1] || "";
-        let mime = p.mimeType || "image/jpeg";
-        if (p.dataUrl?.startsWith("data:")) {
-          const match = p.dataUrl.match(/^data:([^;]+);/);
-          if (match) mime = match[1];
-        }
-
-        // 1. If real binary raster image (JPEG/PNG/WebP), send as inlineData
-        if (mime.startsWith("image/") && !mime.includes("svg") && base64Data.length > 50) {
-          parts.push({
-            inlineData: {
-              mimeType: mime === "image/png" ? "image/png" : "image/jpeg",
-              data: base64Data,
-            },
-          });
-          pageHasContent = true;
-        } else if (mime.includes("svg") && base64Data.length > 0) {
-          // 2. If SVG, extract text tags
-          try {
-            const decodedSvg = Buffer.from(base64Data, "base64").toString("utf-8");
-            const textMatches = Array.from(decodedSvg.matchAll(/<text[^>]*>([^<]+)<\/text>/g))
-              .map((m) => m[1])
-              .join(" ");
-            if (textMatches.trim().length > 0) {
-              parts.push({
-                text: `--- Question Paper Page ${p.pageNumber} Content ---\n${textMatches}`,
-              });
-              pageHasContent = true;
-            }
-          } catch {
-            // Continue
-          }
-        }
-      }
-
-      if (!pageHasContent) {
-        parts.push({
-          text: `--- Question Paper Page ${p.pageNumber} ---`,
-        });
-      }
-    }
-
-    parts.push({
-      text: `Extract all questions from the above ${pages.length} question paper pages in strict JSON format matching the schema.`,
-    });
-
-    for (const model of candidateModels) {
-      let attempts = 0;
-      const maxAttempts = 2;
-
-      while (attempts < maxAttempts) {
-        attempts++;
-        try {
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ role: "user", parts }],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                },
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            const errText = await response.text();
-            if ((response.status === 503 || response.status === 429) && attempts < maxAttempts) {
-              console.warn(`Model ${model} returned ${response.status}, retrying in 1.5s (attempt ${attempts}/${maxAttempts})...`);
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-              continue;
-            }
-            throw new Error(`LLM API returned HTTP ${response.status}: ${errText}`);
-          }
-
-          const data = await response.json();
-          const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!rawJsonText) {
-            throw new Error("LLM response did not contain text content.");
-          }
-
-          const parsedJson = JSON.parse(rawJsonText);
-          return validateExtractedQuestions(parsedJson);
-        } catch (error) {
-          lastError = error as Error;
-          console.warn(`Model ${model} attempt ${attempts} failed:`, (error as Error).message);
-          if (attempts >= maxAttempts) break;
-        }
-      }
-    }
-
-    throw new QuestionExtractionError(
-      `Question Extraction Failed: ${lastError?.message || "All Gemini vision models failed."}`,
-      "LLM_PROVIDER_ERROR",
-      lastError
-    );
-  }
-
-  // 2. If OpenAI API Key is available (GPT-4o-mini Vision)
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${openaiApiKey}`,
+    return {
+      assessment_title: null,
+      total_marks: totalMarks,
+      instructions: [],
+      questions: questionsWithHierarchy,
+      metadata: {
+        total_questions: questionsWithHierarchy.length,
+        page_count: pages.length,
+        extraction_timestamp: new Date().toISOString(),
       },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: QUESTION_EXTRACTION_SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Extract all questions from the above ${pages.length} question paper page images in strict JSON format.`,
-              },
-              ...pages.map((p) => ({
-                type: "image_url",
-                image_url: {
-                  url: p.dataUrl || `data:image/png;base64,${p.imageBase64}`,
-                },
-              })),
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`OpenAI Vision API returned HTTP ${response.status}: ${errText}`);
-    }
-
-    const data = await response.json();
-    const rawJsonText = data.choices?.[0]?.message?.content;
-    if (!rawJsonText) {
-      throw new Error("OpenAI Vision response did not contain text content.");
-    }
-
-    const parsedJson = JSON.parse(rawJsonText);
-    return validateExtractedQuestions(parsedJson);
-  } catch (error) {
-    if (error instanceof QuestionExtractionError) {
-      throw error;
-    }
-    throw new QuestionExtractionError(
-      `Question Extraction Failed: ${(error as Error).message}`,
-      "LLM_PROVIDER_ERROR",
-      error
-    );
+    };
   }
+
+  throw new QuestionExtractionError(
+    "Question Extraction Failed: No questions could be detected in the provided question paper pages.",
+    "LLM_PROVIDER_ERROR"
+  );
 }
 
+/**
+ * Scale-agnostic helper to extract all questions from an array of base64 page images.
+ */
+export async function extractAllQuestions(
+  questionPaperImages: string[],
+  options: QuestionExtractionOptions = {}
+): Promise<ExtractedQuestionItem[]> {
+  const pages: QuestionPaperPageInput[] = questionPaperImages.map((img, idx) => ({
+    pageNumber: idx + 1,
+    dataUrl: img,
+    imageBase64: img.startsWith("data:") ? img.split(",")[1] : img,
+    mimeType: img.startsWith("data:image/jpeg") ? "image/jpeg" : "image/png",
+  }));
+
+  const res = await extractQuestionsFromPages(pages, options);
+  return res.questions;
+}
+
+// Clean alias export
 export const extractQuestionsFromImages = extractQuestionsFromPages;
