@@ -43,8 +43,12 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
 
   // Synchronize active page when selected question changes
   useEffect(() => {
-    if (selectedQuestion?.answerPage) {
-      const targetIndex = selectedQuestion.answerPage - 1;
+    if (
+      selectedQuestion &&
+      selectedQuestion.status === "matched" &&
+      selectedQuestion.answerPage
+    ) {
+      const targetIndex = Math.max(0, selectedQuestion.answerPage - 1);
       setCurrentPageIndex(targetIndex);
       onPageChange?.(selectedQuestion.answerPage);
     }
@@ -73,35 +77,37 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
     });
   };
 
-  // Check if selected question belongs on current viewing page
-  const isCurrentQuestionOnThisPage =
+  // Check if selected question belongs on current viewing page & is matched
+  const isCurrentQuestionOnThisPage = Boolean(
     selectedQuestion &&
-    (selectedQuestion.answerPage || selectedQuestion.boundingBox?.page || 1) ===
-      currentPageIndex + 1;
+      selectedQuestion.status === "matched" &&
+      selectedQuestion.boundingBox &&
+      (selectedQuestion.answerPage || selectedQuestion.boundingBox.page) === currentPageIndex + 1
+  );
 
-  // Resolve bounding box style
+  // Resolve bounding box style strictly for matched questions on this page
   const currentBoxStyle = useMemo(() => {
-    if (!selectedQuestion?.boundingBox) return null;
+    if (!isCurrentQuestionOnThisPage || !selectedQuestion?.boundingBox) return null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const b: any = selectedQuestion.boundingBox;
 
     // Check if xmin / ymin format is present
     if (typeof b.ymin === "number" && typeof b.xmin === "number") {
       if (b.ymin > 1 || b.ymax > 1 || b.xmin > 1 || b.xmax > 1) {
-        // 0-1000 coordinate scale: divide by 10 for percentage
+        // 0-1000 coordinate scale
         return {
-          top: `${b.ymin / 10}%`,
-          left: `${b.xmin / 10}%`,
-          width: `${Math.max(1, (b.xmax - b.xmin) / 10)}%`,
-          height: `${Math.max(1, (b.ymax - b.ymin) / 10)}%`,
+          top: `${(b.ymin / 1000) * 100}%`,
+          left: `${(b.xmin / 1000) * 100}%`,
+          width: `${((b.xmax - b.xmin) / 1000) * 100}%`,
+          height: `${((b.ymax - b.ymin) / 1000) * 100}%`,
         };
       } else {
-        // 0-1 normalized unit scale: multiply by 100
+        // 0-1 normalized unit scale
         return {
           top: `${b.ymin * 100}%`,
           left: `${b.xmin * 100}%`,
-          width: `${Math.max(1, (b.xmax - b.xmin) * 100)}%`,
-          height: `${Math.max(1, (b.ymax - b.ymin) * 100)}%`,
+          width: `${(b.xmax - b.xmin) * 100}%`,
+          height: `${(b.ymax - b.ymin) * 100}%`,
         };
       }
     }
@@ -117,7 +123,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
     }
 
     return null;
-  }, [selectedQuestion]);
+  }, [isCurrentQuestionOnThisPage, selectedQuestion]);
 
   const questionLabel =
     selectedQuestion?.boundingBox?.label ||

@@ -101,22 +101,24 @@ export class AnswerExtractionError extends Error {
 }
 
 // ==========================================
-// 3. System Prompt & Vision Instructions
+// 3. System Prompt & Strict Vision Instructions
 // ==========================================
 
 export const HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT = `
-You are an expert handwritten examination OCR analyzer and transcription model.
-Your task is to transcribe all handwritten answers from the provided student answer sheet images.
+You are an expert handwritten examination OCR analyzer and visual document parser.
+Analyze this page of the student answer sheet and extract EVERY discrete student answer block.
 
-CRITICAL EXTRACTION RULES:
-1. Students may answer questions out of sequence (e.g. Q3 on page 1, followed by Q1).
-2. Segment and extract ALL answer sections on each page.
-3. If an answer label is written by the student (e.g., "1", "Q.2", "Ans 3", "11a", "Section B Q1"), extract it into "detected_question_label". If no label is written, set "detected_question_label" to null.
-4. Transcribe the full handwritten text faithfully into "handwritten_text". If diagrams/formulas are present, describe them concisely and set "diagram_detected" to true.
-5. If a section is rough calculation or scratch work, flag "is_scratch_work": true.
-6. Provide a normalized bounding box [ymin, xmin, ymax, xmax] (on a 0-1000 coordinate scale) enclosing each answer segment.
-7. Assign a confidence score between 0.0 and 1.0 for each block.
-8. Return ONLY valid JSON adhering strictly to this schema:
+Strict Bounding Box Instructions:
+1. Bounding box coordinates must be normalized integers [0-1000] for [ymin, xmin, ymax, xmax].
+2. ymin must align EXACTLY with the top of the written label (e.g., 'Ans 8.', 'Ans 2.', '11(a)', 'Q.1').
+3. ymax must align EXACTLY with the baseline of the LAST sentence belonging to THAT answer.
+4. DO NOT extend ymax into the next answer's header ('Ans 7.') or bottom page margins.
+5. DO NOT enclose student headers, names, roll numbers, or unrelated text.
+6. xmin and xmax should tightly wrap the horizontal line width of the written text.
+7. If an answer starts on this page and continues, transcribe this page's segment.
+8. If an answer is scratch calculation, flag "is_scratch_work": true.
+
+Return strict JSON:
 {
   "student_identifier": string | null,
   "answers": [
@@ -125,7 +127,7 @@ CRITICAL EXTRACTION RULES:
       "detected_question_label": string | null,
       "handwritten_text": string,
       "page_number": number,
-      "bounding_box": { "xmin": number, "ymin": number, "xmax": number, "ymax": number },
+      "bounding_box": { "ymin": number, "xmin": number, "ymax": number, "xmax": number },
       "confidence": number,
       "is_scratch_work": boolean,
       "diagram_detected": boolean
@@ -135,7 +137,7 @@ CRITICAL EXTRACTION RULES:
 `;
 
 // ==========================================
-// 4. Validation & Pipeline Functions
+// 4. Validation Helper
 // ==========================================
 
 export function validateExtractedAnswers(rawPayload: unknown): ExtractedAnswerSheet {
@@ -170,8 +172,140 @@ export function validateExtractedAnswers(rawPayload: unknown): ExtractedAnswerSh
 }
 
 /**
- * Sends student answer sheet page images/text to the LLM (Groq / Gemini / OpenAI)
- * and extracts transcribed handwriting, question labels, and normalized bounding boxes.
+ * Extracts discrete handwritten answer blocks from a single page with tight bounding box isolation.
+ */
+async function extractAnswersFromSinglePage(
+  page: AnswerSheetPageInput,
+  options: AnswerExtractionOptions = {}
+): Promise<HandwrittenAnswerBlock[]> {
+  const groqApiKey =
+    typeof process !== "undefined" ? process.env.GROQ_API_KEY : undefined;
+  const geminiApiKey =
+    options.apiKey ||
+    (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : undefined);
+
+  // 1. Text-only path via Groq if digital text exists and no image available
+  if (groqApiKey && page.extractedText && page.extractedText.trim().length > 30 && !page.dataUrl?.startsWith("data:image/png")) {
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${groqApiKey}`,
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-oss-120b",
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: `Extract all student answers from Page ${page.pageNumber} text:\n\n${page.extractedText}`,
+            },
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const rawJsonText = data.choices?.[0]?.message?.content;
+        if (rawJsonText) {
+          const parsed = JSON.parse(rawJsonText);
+          const validated = validateExtractedAnswers(parsed);
+          return validated.answers.map((a, idx) => ({
+            ...a,
+            id: `ans_p${page.pageNumber}_${idx + 1}`,
+            page_number: page.pageNumber,
+          }));
+        }
+      }
+    } catch {
+      // Fallback to Vision
+    }
+  }
+
+  // 2. Multimodal Vision Path via Gemini
+  if (geminiApiKey) {
+    const candidateModels = [
+      "gemini-3.5-flash-lite",
+      "gemini-3.6-flash",
+      "gemini-3.1-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3.7-flash",
+      "gemini-flash-latest",
+    ];
+
+    const parts: Array<Record<string, unknown>> = [
+      { text: HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT },
+    ];
+
+    const base64Data = page.imageBase64 || page.dataUrl?.split(",")[1] || "";
+    let mime = page.mimeType || "image/png";
+    if (page.dataUrl?.startsWith("data:")) {
+      const match = page.dataUrl.match(/^data:([^;]+);/);
+      if (match) mime = match[1];
+    }
+
+    if (mime.startsWith("image/") && !mime.includes("svg") && base64Data.length > 50) {
+      parts.push({
+        inlineData: {
+          mimeType: mime === "image/png" ? "image/png" : "image/jpeg",
+          data: base64Data,
+        },
+      });
+    }
+
+    if (page.extractedText && page.extractedText.trim().length > 10) {
+      parts.push({
+        text: `--- Page ${page.pageNumber} Extracted Text Context ---\n${page.extractedText}`,
+      });
+    }
+
+    parts.push({
+      text: `Extract every discrete answer block from this student answer sheet Page ${page.pageNumber}. Return strict JSON.`,
+    });
+
+    for (const model of candidateModels) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts }],
+              generationConfig: {
+                responseMimeType: "application/json",
+              },
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawJsonText) {
+            const parsed = JSON.parse(rawJsonText);
+            const validated = validateExtractedAnswers(parsed);
+            return validated.answers.map((a, idx) => ({
+              ...a,
+              id: a.id || `ans_p${page.pageNumber}_${idx + 1}`,
+              page_number: page.pageNumber,
+            }));
+          }
+        }
+      } catch {
+        // Try next candidate model
+      }
+    }
+  }
+
+  return [];
+}
+
+/**
+ * Dynamically iterates through every page image (1...N) and extracts tight bounding boxes per answer block.
+ * Flattens all extracted answers into a single unified array.
  */
 export async function extractAnswersFromPages(
   pages: AnswerSheetPageInput[],
@@ -194,242 +328,38 @@ export async function extractAnswersFromPages(
   const geminiApiKey =
     options.apiKey ||
     (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : undefined);
-  const openaiApiKey =
-    options.apiKey ||
-    (typeof process !== "undefined" ? process.env.OPENAI_API_KEY : undefined);
 
-  if (!groqApiKey && !geminiApiKey && !openaiApiKey) {
+  if (!groqApiKey && !geminiApiKey) {
     throw new AnswerExtractionError(
       "Answer Extraction Failed: Missing API Key. Please set GEMINI_API_KEY or GROQ_API_KEY in your environment.",
       "MISSING_API_KEY"
     );
   }
 
-  // Has extracted text from PDF
-  const combinedText = pages
-    .map((p) => p.extractedText?.trim())
-    .filter(Boolean)
-    .join("\n\n");
+  // Process all N pages dynamically in parallel
+  const pagePromises = pages.map((page) => extractAnswersFromSinglePage(page, options));
+  const pageBlockArrays = await Promise.all(pagePromises);
+  const allAnswers = pageBlockArrays.flat();
 
-  // 1. If Groq API Key is available and we have extracted text from PDF, use fast Groq inference
-  if (groqApiKey && combinedText.length > 20) {
-    try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${groqApiKey}`,
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-oss-120b",
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT },
-            {
-              role: "user",
-              content: `Segment and extract all student answers from this text:\n\n${combinedText}`,
-            },
-          ],
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const rawJsonText = data.choices?.[0]?.message?.content;
-        if (rawJsonText) {
-          const parsed = JSON.parse(rawJsonText);
-          return validateExtractedAnswers(parsed);
-        }
-      }
-    } catch (err) {
-      console.warn("Groq answer extraction fallback to Gemini:", (err as Error).message);
-    }
-  }
-
-  // 2. If Gemini API Key is available (Multimodal Vision / Text)
-  if (geminiApiKey) {
-    const candidateModels = [
-      "gemini-3.5-flash-lite",
-      "gemini-3.6-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-3.5-flash",
-      "gemini-3.7-flash",
-      "gemini-flash-latest",
-      "gemini-flash-lite-latest",
-      "gemini-3-flash-preview",
-      "gemini-pro-latest",
-      "gemini-3.1-pro-preview",
-    ];
-
-    let lastError: Error | null = null;
-
-    // Build Gemini contents parts
-    const parts: Array<Record<string, unknown>> = [{ text: HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT }];
-
-    for (const p of pages) {
-      let pageHasContent = false;
-
-      if (p.extractedText && p.extractedText.trim().length > 10) {
-        parts.push({
-          text: `--- Student Answer Sheet Page ${p.pageNumber} Content ---\n${p.extractedText}`,
-        });
-        pageHasContent = true;
-      } else {
-        const base64Data = p.imageBase64 || p.dataUrl?.split(",")[1] || "";
-        let mime = p.mimeType || "image/jpeg";
-        if (p.dataUrl?.startsWith("data:")) {
-          const match = p.dataUrl.match(/^data:([^;]+);/);
-          if (match) mime = match[1];
-        }
-
-        // 1. If real binary raster image (JPEG/PNG/WebP), send as inlineData
-        if (mime.startsWith("image/") && !mime.includes("svg") && base64Data.length > 50) {
-          parts.push({
-            inlineData: {
-              mimeType: mime === "image/png" ? "image/png" : "image/jpeg",
-              data: base64Data,
-            },
-          });
-          pageHasContent = true;
-        } else if (mime.includes("svg") && base64Data.length > 0) {
-          // 2. If SVG, extract text tags
-          try {
-            const decodedSvg = Buffer.from(base64Data, "base64").toString("utf-8");
-            const textMatches = Array.from(decodedSvg.matchAll(/<text[^>]*>([^<]+)<\/text>/g))
-              .map((m) => m[1])
-              .join(" ");
-            if (textMatches.trim().length > 0) {
-              parts.push({
-                text: `--- Student Answer Sheet Page ${p.pageNumber} Content ---\n${textMatches}`,
-              });
-              pageHasContent = true;
-            }
-          } catch {
-            // Continue
-          }
-        }
-      }
-
-      if (!pageHasContent) {
-        parts.push({
-          text: `--- Student Answer Sheet Page ${p.pageNumber} ---`,
-        });
-      }
-    }
-
-    parts.push({
-      text: `Segment and extract all answer blocks from the above ${pages.length} answer sheet pages in strict JSON format.`,
-    });
-
-    for (const model of candidateModels) {
-      let attempts = 0;
-      const maxAttempts = 2;
-
-      while (attempts < maxAttempts) {
-        attempts++;
-        try {
-          const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ role: "user", parts }],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                },
-              }),
-            }
-          );
-
-          if (!response.ok) {
-            const errText = await response.text();
-            if ((response.status === 503 || response.status === 429) && attempts < maxAttempts) {
-              console.warn(`Answer extractor model ${model} returned ${response.status}, retrying in 1.5s (attempt ${attempts}/${maxAttempts})...`);
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-              continue;
-            }
-            throw new Error(`LLM API returned HTTP ${response.status}: ${errText}`);
-          }
-
-          const data = await response.json();
-          const rawJsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!rawJsonText) {
-            throw new Error("LLM response did not contain text content.");
-          }
-
-          const parsedJson = JSON.parse(rawJsonText);
-          return validateExtractedAnswers(parsedJson);
-        } catch (error) {
-          lastError = error as Error;
-          console.warn(`Answer extractor model ${model} attempt ${attempts} failed:`, (error as Error).message);
-          if (attempts >= maxAttempts) break;
-        }
-      }
-    }
-
-    throw new AnswerExtractionError(
-      `Answer Extraction Failed: ${lastError?.message || "All Gemini vision models failed."}`,
-      "LLM_PROVIDER_ERROR",
-      lastError
-    );
-  }
-
-  // 2. If OpenAI API Key is available (GPT-4o-mini Vision)
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${openaiApiKey}`,
+  // If extraction yielded answers, return validated result
+  if (allAnswers.length > 0) {
+    return {
+      student_identifier: null,
+      total_pages_scanned: pages.length,
+      answers: allAnswers,
+      metadata: {
+        total_blocks_detected: allAnswers.length,
+        page_count: pages.length,
+        extraction_timestamp: new Date().toISOString(),
       },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Segment and extract all handwritten answer blocks from the above ${pages.length} answer sheet page images in strict JSON format.`,
-              },
-              ...pages.map((p) => ({
-                type: "image_url",
-                image_url: {
-                  url: p.dataUrl || `data:image/png;base64,${p.imageBase64}`,
-                },
-              })),
-            ],
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(`OpenAI Vision API returned HTTP ${response.status}: ${errText}`);
-    }
-
-    const data = await response.json();
-    const rawJsonText = data.choices?.[0]?.message?.content;
-    if (!rawJsonText) {
-      throw new Error("OpenAI Vision response did not contain text content.");
-    }
-
-    const parsedJson = JSON.parse(rawJsonText);
-    return validateExtractedAnswers(parsedJson);
-  } catch (error) {
-    if (error instanceof AnswerExtractionError) {
-      throw error;
-    }
-    throw new AnswerExtractionError(
-      `Answer Extraction Failed: ${(error as Error).message}`,
-      "LLM_PROVIDER_ERROR",
-      error
-    );
+    };
   }
+
+  throw new AnswerExtractionError(
+    "Answer Extraction Failed: No answers could be detected in the provided document pages.",
+    "LLM_PROVIDER_ERROR"
+  );
 }
 
+// Clean alias export
 export const extractAnswersFromImages = extractAnswersFromPages;

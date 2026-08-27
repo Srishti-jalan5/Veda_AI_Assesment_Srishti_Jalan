@@ -164,8 +164,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           ? `Correct response mapped for Q${q.question_number}.`
           : `No matching answer detected for Question ${q.question_number}.`);
 
-      // Compute bounding box with support for both 0-100% and 0-1000 scales
-      const boundingBox = matchedAnswer
+      // Compute bounding box strictly when a valid matched answer block exists
+      const isMatched = mapping?.status === "matched" && Boolean(matchedAnswer);
+
+      const boundingBox = isMatched && matchedAnswer
         ? {
             id: `bbox-${matchedAnswer.id}`,
             x: Number((matchedAnswer.bounding_box.xmin * 100).toFixed(2)),
@@ -183,19 +185,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             label: matchedAnswer.detected_question_label || `Q${q.question_number}`,
             page: matchedAnswer.page_number,
           }
-        : {
-            id: `bbox-q-${q.id}`,
-            x: 3,
-            y: 4 + (idx % 3) * 30,
-            width: 94,
-            height: 24,
-            xmin: 30,
-            ymin: (4 + (idx % 3) * 30) * 10,
-            xmax: 970,
-            ymax: (4 + (idx % 3) * 30 + 24) * 10,
-            label: `Q${q.question_number}`,
-            page: q.page_number || 1,
-          };
+        : undefined;
 
       return {
         id: q.id,
@@ -205,12 +195,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         maxMarks,
         awardedMarks,
         aiFeedback: feedback,
-        answerPage: matchedAnswer?.page_number || q.page_number || 1,
+        answerPage: isMatched && matchedAnswer ? matchedAnswer.page_number : undefined,
         boundingBox,
-        status: mapping?.status || "unanswered",
+        status: isMatched ? "matched" : mapping?.status || "unanswered",
         confidence: mapping?.confidence || 0.0,
         matchedAnswerIds: mapping?.matched_answer_ids || [],
-        handwrittenText: matchedAnswer?.handwritten_text || "",
+        handwrittenText: isMatched && matchedAnswer ? matchedAnswer.handwritten_text : "",
       };
     });
 
