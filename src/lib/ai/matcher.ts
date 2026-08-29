@@ -3,6 +3,7 @@ import {
 } from "./question-extractor";
 import {
   HandwrittenAnswerBlock,
+  AnswerBoundingBox,
 } from "./answer-extractor";
 import {
   generateEmbedding,
@@ -464,7 +465,7 @@ export async function mapQuestionsToAnswers(
  */
 export function mapQuestionsToAnswersDirect<
   Q extends { id: string; question_number: string },
-  A extends { detected_question_label?: string | null; page_number: number; bounding_box?: any; handwritten_text: string }
+  A extends { detected_question_label?: string | null; page_number: number; bounding_box?: AnswerBoundingBox | Record<string, number> | null; handwritten_text: string }
 >(
   questions: Q[],
   allAnswers: A[]

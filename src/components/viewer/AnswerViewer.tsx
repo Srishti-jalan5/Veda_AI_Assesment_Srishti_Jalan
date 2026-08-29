@@ -8,6 +8,7 @@ import {
   Plus,
 } from "lucide-react";
 import { QuestionItem } from "@/types/assessment";
+import { AnswerBoundingBox } from "@/lib/ai/answer-extractor";
 import { cn } from "@/lib/utils";
 
 export interface AnswerViewerProps {
@@ -17,7 +18,7 @@ export interface AnswerViewerProps {
     question_number?: string | number;
     status?: string;
     page_number?: number | null;
-    boundingBox?: any;
+    boundingBox?: AnswerBoundingBox | Record<string, number> | null;
   } | null;
   pageImages?: string[];
   totalPages?: number;
@@ -102,7 +103,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
   // Resolve bounding box style strictly for matched questions on this page
   const currentBoxStyle = useMemo(() => {
     if (!isCurrentQuestionOnThisPage || !activeMapping?.boundingBox) return null;
-    const b: any = activeMapping.boundingBox;
+    const b = activeMapping.boundingBox as Record<string, number>;
 
     // Check if xmin / ymin format is present
     if (typeof b.ymin === "number" && typeof b.xmin === "number") {
@@ -340,7 +341,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
                       color: "#FFFFFF",
                     }}
                   >
-                    {activeMapping.boundingBox?.label || (typeof activeMapping.question_number === "number" || !isNaN(Number(activeMapping.question_number)) ? `Q${activeMapping.question_number}` : `Ans ${activeMapping.question_number}`)}
+                    {(activeMapping.boundingBox as { label?: string })?.label || (typeof activeMapping.question_number === "number" || !isNaN(Number(activeMapping.question_number)) ? `Q${activeMapping.question_number}` : `Ans ${activeMapping.question_number}`)}
                   </span>
                 </div>
               </div>

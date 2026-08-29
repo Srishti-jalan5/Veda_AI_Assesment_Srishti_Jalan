@@ -3,9 +3,7 @@
 import React from "react";
 import {
   LayoutGrid,
-  Users,
   FileText,
-  ClipboardList,
   PieChart,
   Sparkles,
   ChevronsRight,
