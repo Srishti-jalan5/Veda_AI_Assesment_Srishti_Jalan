@@ -60,141 +60,160 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
 
   return (
     <div className="w-full h-full flex items-center justify-center select-none animate-in fade-in duration-300">
-      {/* Expanded Sharp Extracting Card */}
+      {/* Frame 1984077862: Width 1343px (fluid w-full), Height 696px (fluid h-full), Background #FFFFFF, Radius 24px, Gap 12px */}
       <div
         style={{
           width: "100%",
           height: "100%",
           background: "#FFFFFF",
-          borderRadius: "8px",
+          borderRadius: "24px",
+          gap: "12px",
+          boxShadow: "0px 8px 24px rgba(0, 0, 0, 0.04), 0px 1px 3px rgba(0, 0, 0, 0.02)",
         }}
-        className="flex flex-col justify-center items-center shadow-xs border border-slate-200/60 p-6"
+        className="flex flex-col justify-center items-center border border-black/5 p-6"
       >
-        {/* AnalysingLoader Container */}
-        <div className="flex flex-col justify-center items-center gap-[14px] max-w-[420px] w-full">
-          {/* Sparkle Vector Graphic Cluster (Width: 98px, Height: 104px) */}
-          <div className="relative w-[98px] h-[104px] flex items-center justify-center">
-            {/* Top-Right Primary Star (58px × 58px) */}
+        {/* AnalysingLoader (Width: 177px, Height: 221.49px, Gap: 15px) */}
+        <div
+          style={{
+            width: "177px",
+            minHeight: "221.49px",
+            gap: "15px",
+          }}
+          className="flex flex-col justify-center items-center"
+        >
+          {/* Sparkle Icon Container (Width: 128.15px, Height: 134.49px) */}
+          <div
+            style={{
+              width: "128.15px",
+              height: "134.49px",
+            }}
+            className="relative shrink-0"
+          >
+            {/* Vector 2: Primary Big Star (top-right: left 25.36%, top 0%, width 74.64%, height 71.38%) */}
             <div
               style={{
-                top: "0px",
-                right: "0px",
-                width: "58px",
-                height: "58px",
+                position: "absolute",
+                left: "25.36%",
+                top: "0%",
+                width: "74.64%",
+                height: "71.38%",
+                filter: "drop-shadow(0px 0px 8px rgba(255, 86, 35, 0.45))",
               }}
-              className="absolute animate-pulse"
+              className="animate-pulse"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/extracting-star.png"
-                alt="Extracting Sparkle"
-                className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(255,86,35,0.4)]"
-              />
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <path
+                  d="M50 0 C50 27.614 27.614 50 0 50 C27.614 50 50 72.386 50 100 C50 72.386 72.386 50 100 50 C72.386 50 50 27.614 50 0 Z"
+                  fill="#FF5623"
+                />
+              </svg>
             </div>
 
-            {/* Bottom-Left Secondary Star (38px × 38px) */}
+            {/* Vector 3: Secondary Medium Star (bottom-left: left 9.75%, top 46.47%, width 55.98%, height 53.53%) */}
             <div
               style={{
-                bottom: "4px",
-                left: "4px",
-                width: "38px",
-                height: "38px",
+                position: "absolute",
+                left: "9.75%",
+                top: "46.47%",
+                width: "55.98%",
+                height: "53.53%",
+                filter: "drop-shadow(0px 0px 6px rgba(255, 86, 35, 0.35))",
               }}
-              className="absolute animate-pulse [animation-delay:200ms]"
+              className="animate-pulse [animation-delay:200ms]"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/extracting-star.png"
-                alt="Extracting Sparkle"
-                className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(255,86,35,0.3)]"
-              />
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <path
+                  d="M50 0 C50 27.614 27.614 50 0 50 C27.614 50 50 72.386 50 100 C50 72.386 72.386 50 100 50 C72.386 50 50 27.614 50 0 Z"
+                  fill="#FF5623"
+                />
+              </svg>
             </div>
 
-            {/* Right Accent Small Star (18px × 18px) */}
+            {/* Vector 4: Accent Small Star (bottom-right: left 70.22%, top 62.27%, width 22.4%, height 21.41%, opacity 0.52) */}
             <div
               style={{
-                bottom: "16px",
-                right: "8px",
-                width: "18px",
-                height: "18px",
-                opacity: 0.65,
+                position: "absolute",
+                left: "70.22%",
+                top: "62.27%",
+                width: "22.4%",
+                height: "21.41%",
+                opacity: 0.52,
               }}
-              className="absolute animate-pulse [animation-delay:400ms]"
+              className="animate-pulse [animation-delay:400ms]"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/extracting-star.png"
-                alt="Extracting Sparkle"
-                className="w-full h-full object-contain"
-              />
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                <path
+                  d="M50 0 C50 27.614 27.614 50 0 50 C27.614 50 50 72.386 50 100 C50 72.386 72.386 50 100 50 C72.386 50 50 27.614 50 0 Z"
+                  fill="#FF5623"
+                />
+              </svg>
             </div>
 
-            {/* Left Orbiting Accent Dot */}
+            {/* Ellipse 18: Accent Dot (left 13.65%, top 35.32%, width 9.76%, height 9.29%, opacity 0.83) */}
             <div
               style={{
-                top: "36px",
-                left: "10px",
-                width: "6px",
-                height: "6px",
-                opacity: 0.85,
+                position: "absolute",
+                left: "13.65%",
+                top: "35.32%",
+                width: "9.76%",
+                height: "9.29%",
+                opacity: 0.83,
+                background: "#FF5623",
+                borderRadius: "50%",
                 boxShadow: "0px 0px 6px rgba(255, 86, 35, 0.6)",
               }}
-              className="absolute rounded-full bg-[#FF5623] animate-ping"
+              className="animate-ping"
             />
           </div>
 
-          {/* Text Group */}
-          <div className="flex flex-col items-center text-center gap-1 w-full">
-            {/* Extracting... Title */}
+          {/* Frame 1984078042: Text Container (Width: 177px, Height: 72px) */}
+          <div
+            style={{
+              width: "177px",
+              height: "72px",
+            }}
+            className="flex flex-col items-center justify-center text-center shrink-0"
+          >
+            {/* Extracting... (Width: 157px, Height: 36px, Font 30px 700, -1.2px) */}
             <h2
               style={{
-                fontFamily: "var(--font-bricolage), sans-serif",
+                width: "159px",
+                height: "36px",
+                fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
                 fontWeight: 700,
-                fontSize: "22px",
-                lineHeight: "28px",
-                letterSpacing: "-0.04em",
-                backgroundImage:
-                  "linear-gradient(90deg, #303030 20%, #606060 40%, #808080 50%, #606060 60%, #303030 80%)",
-                backgroundSize: "200% auto",
+                fontSize: "30px",
+                lineHeight: "36px",
+                letterSpacing: "-1.2px",
+                background: "linear-gradient(90deg, #303030 20%, #606060 40%, #808080 50%, #606060 60%, #303030 80%)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
               }}
-              className="animate-pulse"
+              className="whitespace-nowrap flex items-center justify-center"
             >
               Extracting...
             </h2>
 
-            {/* Dynamic Step Description */}
+            {/* This may take a while (Width: 177px, Height: 36px, Font 20px 400, -1.2px, color rgba(70, 70, 70, 0.75)) */}
             <p
               style={{
-                fontFamily: "var(--font-bricolage), sans-serif",
-                fontWeight: 500,
-                fontSize: "13.5px",
-                lineHeight: "20px",
-                letterSpacing: "-0.03em",
-                color: "#FF5623",
-              }}
-              className="transition-all duration-200"
-            >
-              {activeMessage}
-            </p>
-
-            {/* Subtitle */}
-            <p
-              style={{
-                fontFamily: "var(--font-bricolage), sans-serif",
+                width: "177px",
+                height: "36px",
+                fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
                 fontWeight: 400,
-                fontSize: "12.5px",
-                lineHeight: "18px",
-                letterSpacing: "-0.03em",
-                color: "rgba(70, 70, 70, 0.65)",
+                fontSize: "20px",
+                lineHeight: "36px",
+                letterSpacing: "-1.2px",
+                color: "rgba(70, 70, 70, 0.75)",
               }}
+              className="whitespace-nowrap flex items-center justify-center text-center"
             >
-              This may take a few moments
+              This may take a while
             </p>
+          </div>
 
-            {/* Progress Bar Track */}
-            <div className="w-full max-w-[280px] h-[5px] bg-slate-100 rounded-full overflow-hidden mt-3 border border-slate-200/60">
+          {/* Smooth Progress Indicator Bar */}
+          <div className="w-[177px] flex flex-col items-center gap-1.5 mt-1">
+            <div className="w-full h-[4px] bg-slate-100 rounded-full overflow-hidden border border-slate-200/50">
               <div
                 style={{
                   width: `${activeProgress}%`,
@@ -204,6 +223,20 @@ export const ProcessingScreen: React.FC<ProcessingScreenProps> = ({
                 className="h-full rounded-full transition-all duration-200 ease-out"
               />
             </div>
+
+            {/* Dynamic Stage Text */}
+            <span
+              style={{
+                fontFamily: "var(--font-bricolage), sans-serif",
+                fontWeight: 500,
+                fontSize: "12px",
+                letterSpacing: "-0.02em",
+                color: "#FF5623",
+              }}
+              className="text-center truncate"
+            >
+              {activeMessage}
+            </span>
           </div>
         </div>
       </div>

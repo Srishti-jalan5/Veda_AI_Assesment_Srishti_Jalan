@@ -18,72 +18,88 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   return (
-    <header className="w-full flex items-center justify-center pt-1.5 px-1.5 z-10 shrink-0 select-none">
-      {/* Sleek Top Bar (Height: 48px, Radius: 6px, Background: rgba(255, 255, 255, 0.75), Backdrop blur) */}
+    <header className="w-full flex items-center justify-center pt-3 px-3 z-10 shrink-0 select-none">
+      {/* Frame 1984077337: Height 56px, Radius 16px, Padding 0 8px 0 24px, Gap 10px, Background rgba(255, 255, 255, 0.75) */}
       <div
         style={{
-          height: "48px",
-          borderRadius: "6px",
+          height: "56px",
+          borderRadius: "16px",
           background: "rgba(255, 255, 255, 0.75)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          padding: "0px 6px 0px 14px",
-          gap: "8px",
+          padding: "0px 8px 0px 24px",
+          gap: "10px",
+          boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.04), 0px 1px 3px rgba(0, 0, 0, 0.02)",
         }}
-        className="w-full max-w-[1341px] flex items-center justify-between border border-white/60 shadow-xs"
+        className="w-full flex items-center justify-between border border-black/5"
       >
-        {/* Left Section: Back Arrow & Exams Breadcrumb */}
-        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          {/* Left Arrow Button (34px × 34px) */}
+        {/* Left Section: Frame 1984077964 (Back Arrow) + Frame 1618872410 (Breadcrumb) */}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Frame 1984077964 / Frame 1984077294: Left Arrow Button (40px × 40px, Radius: 100px, Background: #FFFFFF) */}
           <button
             onClick={onBack}
             title="Go Back"
             style={{
-              width: "34px",
-              height: "34px",
+              width: "40px",
+              height: "40px",
               background: "#FFFFFF",
-              borderRadius: "5px",
+              borderRadius: "100px",
+              boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.04)",
             }}
-            className="flex items-center justify-center shadow-xs text-[#303030] hover:scale-105 active:scale-95 transition-transform shrink-0"
+            className="flex items-center justify-center text-[#303030] hover:bg-slate-50 active:scale-95 transition-all shrink-0 border border-black/5 cursor-pointer"
           >
-            <ArrowLeft className="w-4 h-4 text-[#303030]" strokeWidth={2.2} />
+            <ArrowLeft className="w-6 h-6 text-[#303030]" strokeWidth={2} />
           </button>
 
-          {/* Breadcrumb (Gap: 6px) */}
-          <div className="flex items-center gap-1.5 min-w-0">
-            {/* Clipboard Icon */}
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="shrink-0"
-            >
-              <rect
-                x="3.33"
-                y="3.33"
-                width="13.33"
-                height="13.33"
-                rx="2"
-                stroke="#A9A9A9"
-                strokeWidth="1.8"
+          {/* Mobile VedaAI Brand Logo (Visible on mobile only) */}
+          <div className="flex md:hidden items-center gap-2">
+            <div className="w-[30px] h-[30px] rounded-lg bg-[#1C1C1E] flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/veda-logo.png"
+                alt="VedaAI Logo"
+                className="w-full h-full object-contain"
               />
-              <path
-                d="M6.67 1.67H13.33V4.17H6.67V1.67Z"
-                stroke="#A9A9A9"
-                strokeWidth="1.8"
-              />
-            </svg>
-
-            {/* Breadcrumb Text */}
+            </div>
             <span
               style={{
                 fontFamily: "var(--font-bricolage), sans-serif",
+                fontWeight: 700,
+                fontSize: "18px",
+                letterSpacing: "-0.04em",
+                color: "#2B2B2B",
+              }}
+            >
+              VedaAI
+            </span>
+          </div>
+
+          {/* Frame 1618872410: Desktop Breadcrumb (Gap 8px, Color #A9A9A9, Font 16px) */}
+          <div className="hidden md:flex items-center gap-2 min-w-0">
+            {/* Clipboard Icon (20px × 20px, Stroke: #A9A9A9) */}
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#A9A9A9"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0"
+            >
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+            </svg>
+
+            {/* Exams Text (16px, 600 weight, line-height 19px, letter-spacing -0.04em, #A9A9A9) */}
+            <span
+              style={{
+                fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
                 fontWeight: 600,
-                fontSize: "14px",
-                lineHeight: "18px",
-                letterSpacing: "-0.03em",
+                fontSize: "16px",
+                lineHeight: "19px",
+                letterSpacing: "-0.04em",
                 color: "#A9A9A9",
               }}
               className="truncate"
@@ -93,60 +109,86 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </div>
         </div>
 
-        {/* Right Section: Sleek Desktop Controls & Profile */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Help Button (32px × 32px) */}
+        {/* Right Section: Controls & Profile */}
+        <div className="flex items-center gap-2.5 shrink-0">
+          {/* Frame 1984077296: Help Button (36px × 36px, Background #F6F6F6, Radius 100px) */}
           <button
             title="Help"
             style={{
-              width: "32px",
-              height: "32px",
+              width: "36px",
+              height: "36px",
               background: "#F6F6F6",
-              borderRadius: "5px",
+              borderRadius: "100px",
             }}
-            className="flex items-center justify-center hover:bg-slate-200/80 transition-colors"
+            className="hidden sm:flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer"
           >
-            <div className="w-[18px] h-[18px] rounded-xs border-[1.5px] border-[#303030] flex items-center justify-center text-[#303030] font-bold text-[11px] leading-none">
-              ?
+            {/* Frame 1984077425: Inner 24px circle with ? text */}
+            <div
+              style={{
+                width: "24px",
+                height: "24px",
+                border: "2px solid #303030",
+                borderRadius: "100px",
+              }}
+              className="flex items-center justify-center"
+            >
+              <span
+                style={{
+                  fontFamily: "var(--font-bricolage), sans-serif",
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  lineHeight: "1",
+                  color: "#303030",
+                }}
+              >
+                ?
+              </span>
             </div>
           </button>
 
-          {/* Notifications Button (32px × 32px) */}
+          {/* Frame 1984077295: Notification Bell Button (36px × 36px, Background #F6F6F6, Radius 100px) */}
           <button
             title="Notifications"
             style={{
-              width: "32px",
-              height: "32px",
+              width: "36px",
+              height: "36px",
               background: "#F6F6F6",
-              borderRadius: "5px",
+              borderRadius: "100px",
+              position: "relative",
             }}
-            className="relative flex items-center justify-center hover:bg-slate-200/80 transition-colors"
+            className="flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer"
           >
-            <Bell className="w-4 h-4 text-[#303030]" strokeWidth={2} />
+            <Bell className="w-5 h-5 text-[#303030]" strokeWidth={2} />
+            {/* Ellipse 9: Orange dot (8px × 8px, background #FF5623) */}
             <span
               style={{
-                width: "7px",
-                height: "7px",
+                position: "absolute",
+                width: "8px",
+                height: "8px",
                 background: "#FF5623",
+                borderRadius: "50%",
+                top: "4px",
+                right: "4px",
               }}
-              className="absolute top-[4px] right-[4px] rounded-full ring-2 ring-[#F6F6F6]"
+              className="ring-1.5 ring-white"
             />
           </button>
 
-          {/* AI Sparkle Button (32px × 32px) */}
+          {/* Frame 1984077963: AI Star / Sparkle Button (36px × 36px, Background #FFFFFF, Radius 49px) */}
           <button
             title="AI Assistant"
             style={{
-              width: "32px",
-              height: "32px",
+              width: "36px",
+              height: "36px",
               background: "#FFFFFF",
-              borderRadius: "5px",
+              borderRadius: "49px",
+              boxShadow: "0px 1px 4px rgba(0, 0, 0, 0.04)",
             }}
-            className="flex items-center justify-center shadow-xs hover:scale-105 transition-transform"
+            className="hidden sm:flex items-center justify-center hover:scale-105 transition-transform border border-black/5 cursor-pointer"
           >
             <svg
-              width="17"
-              height="17"
+              width="20"
+              height="20"
               viewBox="0 0 24 24"
               fill="#2B2B2B"
               xmlns="http://www.w3.org/2000/svg"
@@ -155,20 +197,28 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             </svg>
           </button>
 
-          {/* User Profile Container */}
+          {/* Frame 1984077965: User Profile Container (Padding 6px 12px, Height 44px, Radius 12px, Gap 8px) */}
           <div className="relative">
             <button
               onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
               style={{
-                height: "36px",
-                borderRadius: "5px",
-                padding: "4px 8px",
-                gap: "6px",
+                height: "44px",
+                borderRadius: "12px",
+                padding: "6px 12px",
+                gap: "8px",
               }}
-              className="flex items-center hover:bg-black/5 transition-colors"
+              className="flex items-center hover:bg-black/5 transition-colors cursor-pointer"
             >
-              {/* Profile Image (26px × 26px) */}
-              <div className="w-[26px] h-[26px] rounded-xs overflow-hidden shrink-0 shadow-xs border border-black/5 bg-[#F6F6F6] flex items-center justify-center">
+              {/* Frame 1618872412: Profile Avatar (32px × 32px, Radius 100px) */}
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "100px",
+                  background: "#F6F6F6",
+                }}
+                className="overflow-hidden shrink-0 shadow-xs border border-black/10 flex items-center justify-center"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/madhur-avatar.png"
@@ -177,41 +227,41 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                 />
               </div>
 
-              {/* Madhur Rastogi + Chevron */}
-              <div className="flex items-center gap-1">
+              {/* Frame 1984077288: Madhur Rastogi + Chevron (Desktop) */}
+              <div className="hidden md:flex items-center gap-1">
                 <span
                   style={{
-                    fontFamily: "var(--font-bricolage), sans-serif",
+                    fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
                     fontWeight: 600,
-                    fontSize: "14px",
-                    lineHeight: "18px",
-                    letterSpacing: "-0.03em",
+                    fontSize: "16px",
+                    lineHeight: "19px",
+                    letterSpacing: "-0.04em",
                     color: "#303030",
                   }}
                   className="whitespace-nowrap"
                 >
                   Madhur Rastogi
                 </span>
-                <ChevronDown className="w-4 h-4 text-[#303030] shrink-0" strokeWidth={1.8} />
+                <ChevronDown className="w-5 h-5 text-[#303030] shrink-0" strokeWidth={1.5} />
               </div>
             </button>
 
             {/* Profile Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-md shadow-xl border border-slate-200/80 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200/80 p-2 z-50 animate-in fade-in zoom-in-95 duration-100">
                 <div className="p-2 border-b border-slate-100 mb-1">
                   <p className="text-xs font-bold text-slate-800">Madhur Rastogi</p>
                   <p className="text-[11px] text-slate-500">Teacher • DPS Bokaro</p>
                 </div>
                 <button
                   onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-xs transition-colors"
+                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
                 >
                   Account Settings
                 </button>
                 <button
                   onClick={() => setProfileDropdownOpen(false)}
-                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xs transition-colors"
+                  className="w-full text-left px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                 >
                   Sign Out
                 </button>

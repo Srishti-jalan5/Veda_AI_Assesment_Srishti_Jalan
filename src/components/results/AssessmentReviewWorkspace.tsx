@@ -95,14 +95,14 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
   return (
     <div className="w-full h-full flex flex-col overflow-hidden select-none">
       {/* Mobile Top Segmented Control */}
-      <div className="lg:hidden px-3 py-2 bg-white/80 backdrop-blur-xs border-b border-slate-200 shrink-0">
-        <div className="flex items-center bg-slate-100 p-1 rounded-2xl">
+      <div className="lg:hidden px-3 py-2 bg-white/80 backdrop-blur-xs border-b border-black/5 shrink-0">
+        <div className="flex items-center bg-[#F3F4F6] p-1 rounded-full border border-black/5">
           <button
             onClick={() => setMobileActiveToggle("question")}
             className={cn(
-              "flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+              "flex-1 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5",
               mobileActiveToggle === "question"
-                ? "bg-white text-slate-900 shadow-xs"
+                ? "bg-white text-[#2B2B2B] shadow-xs"
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
@@ -113,9 +113,9 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
           <button
             onClick={() => setMobileActiveToggle("answer")}
             className={cn(
-              "flex-1 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5",
+              "flex-1 py-2 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1.5",
               mobileActiveToggle === "answer"
-                ? "bg-slate-900 text-white shadow-xs"
+                ? "bg-[#2B2B2B] text-white shadow-xs"
                 : "text-slate-500 hover:text-slate-800"
             )}
           >
@@ -125,13 +125,13 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
         </div>
       </div>
 
-      {/* Main Split-View Workspace (Left: QuestionPanel 480px, Right: AnswerViewer) */}
-      <div className="flex-1 flex flex-row overflow-hidden p-1.5 gap-1.5">
-        {/* Left Side: Question List & Rubric Panel */}
+      {/* Main Split-View Workspace (Left: QuestionPanel responsive, Right: AnswerViewer - Frame 1984077862: max 1343px, gap 12px) */}
+      <div className="flex-1 max-w-[1343px] w-full mx-auto flex flex-row overflow-hidden p-0 gap-3">
+        {/* Left Side: Question List & Rubric Panel (Frame 1984077861: ~672px / 50% split) */}
         <div
           className={cn(
-            "w-full lg:w-[480px] h-full shrink-0 flex flex-col",
-            mobileActiveToggle === "answer" ? "hidden lg:flex" : "flex"
+            "w-full md:w-[48%] lg:w-[50%] xl:max-w-[672px] h-full shrink-0 flex flex-col",
+            mobileActiveToggle === "answer" ? "hidden md:flex" : "flex"
           )}
         >
           <QuestionPanel
@@ -145,7 +145,7 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
         <div
           className={cn(
             "flex-1 h-full min-w-0 flex flex-col",
-            mobileActiveToggle === "question" ? "hidden lg:flex" : "flex"
+            mobileActiveToggle === "question" ? "hidden md:flex" : "flex"
           )}
         >
           <AnswerViewer

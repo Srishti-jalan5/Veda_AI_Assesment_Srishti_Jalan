@@ -9,6 +9,7 @@ import {
   PieChart,
   Sparkles,
   ChevronsRight,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,38 +37,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       style={{
-        width: isCollapsed ? "58px" : "272px",
-        height: "calc(100vh - 14px)",
-        maxHeight: "780px",
-        borderRadius: "6px",
+        width: isCollapsed ? "68px" : "272px",
+        height: "calc(100vh - 24px)",
+        borderRadius: "20px",
         boxShadow:
-          "0px 8px 24px rgba(0, 0, 0, 0.08), 0px 12px 20px rgba(0, 0, 0, 0.1)",
+          "0px 8px 24px rgba(0, 0, 0, 0.06), 0px 2px 6px rgba(0, 0, 0, 0.04)",
       }}
       className={cn(
-        "hidden md:flex flex-col bg-white transition-all duration-300 select-none z-20 shrink-0 my-1.5 ml-1.5",
-        isCollapsed ? "p-2 items-center" : "p-4 sm:p-5"
+        "hidden md:flex flex-col justify-between bg-white transition-all duration-300 select-none z-20 shrink-0 my-3 ml-3 border border-black/5 overflow-hidden",
+        isCollapsed ? "p-2.5 items-center" : "p-4 sm:p-5"
       )}
     >
-      {/* Top Section — Header Row (Logo + Title) */}
-      <div className="w-full flex flex-col gap-5 sm:gap-6">
-        {/* Header Row */}
+      {/* Top Section — Frame 39962 (Width: 251px, Gap: ~24px to 32px) */}
+      <div className="w-full flex flex-col gap-6 min-h-0">
+        {/* Frame 1618872393: Header Row (Width: 251px, Height: 40px, Gap: 8px) */}
         <div
           className={cn(
-            "w-full h-[36px] flex items-center",
+            "w-full h-[40px] flex items-center",
             isCollapsed ? "justify-center" : "justify-between"
           )}
         >
-          {/* Logo + Title */}
+          {/* Frame 1984077293: Logo + Title (Gap: 8px) */}
           <div className="flex items-center gap-2">
-            {/* Component 1 (Width: 36px, Height: 36px, Radius: 5px) */}
+            {/* Component 1 (Width: 40px, Height: 40px, Radius: 12px, Background: #303030) */}
             <div
               onClick={onToggleCollapse}
               style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "5px",
+                width: "40px",
+                height: "40px",
+                borderRadius: "12px",
+                background: "#303030",
               }}
-              className="relative flex items-center justify-center shrink-0 shadow-xs overflow-hidden cursor-pointer hover:scale-105 transition-transform select-none bg-[#303030]"
+              className="relative flex items-center justify-center shrink-0 shadow-xs overflow-hidden cursor-pointer hover:scale-105 transition-transform select-none"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -77,33 +78,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </div>
 
-            {/* VedaAI Text */}
+            {/* VedaAI Text (28px, 700 weight, line-height 20px, letter-spacing -0.06em, #303030) */}
             {!isCollapsed && (
               <span
                 style={{
-                  fontFamily: "var(--font-bricolage), sans-serif",
-                  fontSize: "24px",
+                  fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
+                  fontWeight: 700,
+                  fontSize: "28px",
                   lineHeight: "20px",
-                  letterSpacing: "-0.05em",
+                  letterSpacing: "-0.06em",
                   color: "#303030",
                 }}
-                className="font-bold flex items-center select-none"
+                className="flex items-center select-none"
               >
                 VedaAI
               </span>
             )}
           </div>
 
-          {/* Toggle Button */}
+          {/* Toggle / Collapse Button (20px × 20px) */}
           {!isCollapsed && (
             <button
               onClick={onToggleCollapse}
               title="Collapse sidebar"
-              className="w-[18px] h-[18px] flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors p-0 rounded-sm hover:bg-slate-100"
+              className="w-5 h-5 flex items-center justify-center text-[rgba(94,94,94,0.8)] hover:text-[#303030] transition-colors p-0 rounded-md cursor-pointer"
             >
               <svg
-                width="18"
-                height="18"
+                width="20"
+                height="20"
                 viewBox="0 0 20 20"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   height="16"
                   rx="3"
                   stroke="rgba(94, 94, 94, 0.8)"
-                  strokeWidth="1.5"
+                  strokeWidth="1.6"
                 />
                 <line
                   x1="7.5"
@@ -123,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   x2="7.5"
                   y2="18"
                   stroke="rgba(94, 94, 94, 0.8)"
-                  strokeWidth="1.5"
+                  strokeWidth="1.6"
                 />
               </svg>
             </button>
@@ -131,46 +133,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Action Button & Navigation Group */}
-        <div className="w-full flex flex-col gap-3 sm:gap-3.5">
-          {/* AI Teacher's Toolkit Pill Button */}
+        <div className="w-full flex flex-col gap-6">
+          {/* AI Teacher's Toolkit Pill Button (Container: 251px × 42px, Background #272727, Radius 100px) */}
           <div>
             {isCollapsed ? (
               <button
                 onClick={onToggleCollapse}
                 title="AI Teacher's Toolkit"
                 style={{
-                  width: "38px",
-                  height: "36px",
+                  width: "42px",
+                  height: "42px",
                   background: "#272727",
+                  border: "2px solid #FF5623",
                   boxShadow:
-                    "0px 12px 32px rgba(255, 255, 255, 0.12), inset 0px 0px 24px rgba(255, 255, 255, 0.2)",
-                  borderRadius: "6px",
+                    "0px 16px 48px rgba(255, 255, 255, 0.12), 0px 32px 48px rgba(255, 255, 255, 0.2)",
+                  borderRadius: "100px",
                 }}
-                className="mx-auto flex items-center justify-center text-white hover:scale-105 transition-transform"
+                className="mx-auto flex items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5 text-white" />
+                <Sparkles className="w-4 h-4 text-white" />
               </button>
             ) : (
               <button
                 style={{
-                  height: "38px",
+                  width: "100%",
+                  height: "42px",
                   background: "#272727",
+                  border: "2px solid #FF5623",
                   boxShadow:
-                    "0px 12px 32px rgba(255, 255, 255, 0.12), inset 0px 0px 24px rgba(255, 255, 255, 0.2)",
-                  borderRadius: "6px",
+                    "0px 16px 48px rgba(255, 255, 255, 0.12), 0px 32px 48px rgba(255, 255, 255, 0.2), inset 0px -1px 3.5px rgba(177, 177, 177, 0.6), inset 0px 0px 34.5px rgba(255, 255, 255, 0.25)",
+                  borderRadius: "100px",
+                  padding: "8px 24px",
+                  gap: "10px",
                 }}
-                className="w-full py-1.5 px-4 flex items-center justify-center gap-2 text-white hover:bg-[#1f1f1f] transition-all group"
+                className="flex items-center justify-center text-white hover:bg-[#333333] active:scale-98 transition-all cursor-pointer group"
               >
-                <Sparkles className="w-3.5 h-3.5 text-white group-hover:rotate-12 transition-transform shrink-0" />
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="#FFFFFF"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="shrink-0"
+                >
+                  <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
+                </svg>
                 <span
                   style={{
-                    fontFamily: "Inter, sans-serif",
-                    fontSize: "14px",
-                    lineHeight: "22px",
-                    letterSpacing: "-0.03em",
+                    fontFamily: "'Inter', sans-serif",
+                    fontWeight: 500,
+                    fontSize: "16px",
+                    lineHeight: "28px",
+                    letterSpacing: "-0.04em",
                     color: "#FFFFFF",
                   }}
-                  className="font-medium whitespace-nowrap"
+                  className="whitespace-nowrap"
                 >
                   AI Teacher&apos;s Toolkit
                 </span>
@@ -178,12 +195,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {/* Menu Items Container */}
+          {/* Menu Items Container (Frame Menu: Width 251px, Gap 8px) */}
           <nav
             style={{
-              width: isCollapsed ? "38px" : "100%",
+              width: isCollapsed ? "42px" : "100%",
             }}
-            className="flex flex-col gap-1 sm:gap-1.5"
+            className="flex flex-col gap-2"
           >
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -195,32 +212,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={() => onNavSelect?.(item.id)}
                   title={isCollapsed ? item.label : undefined}
                   style={{
-                    height: "34px",
-                    borderRadius: "5px",
+                    height: isActive ? "40px" : "38px",
+                    borderRadius: "8px",
                     background: isActive ? "#F0F0F0" : "transparent",
+                    padding: isActive ? "9px 12px" : "8px 12px",
+                    gap: "8px",
                   }}
                   className={cn(
-                    "flex items-center transition-colors select-none",
+                    "flex items-center transition-colors select-none cursor-pointer",
                     isCollapsed
-                      ? "justify-center w-[38px] p-1.5"
-                      : "w-full px-2.5 py-1.5 gap-2 text-left",
-                    !isActive && "hover:bg-slate-100/60"
+                      ? "justify-center w-[42px] p-2"
+                      : "w-full text-left",
+                    !isActive && "hover:bg-slate-100/70"
                   )}
                 >
                   <Icon
+                    style={{ width: "20px", height: "20px" }}
                     className={cn(
-                      "w-[17px] h-[17px] shrink-0",
+                      "shrink-0",
                       isActive ? "text-[#303030]" : "text-[rgba(94,94,94,0.8)]"
                     )}
-                    strokeWidth={isActive ? 2.2 : 1.8}
+                    strokeWidth={isActive ? 2 : 1.8}
                   />
                   {!isCollapsed && (
                     <span
                       style={{
-                        fontFamily: "var(--font-bricolage), sans-serif",
-                        fontSize: "14px",
+                        fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
+                        fontSize: "16px",
                         lineHeight: "140%",
-                        letterSpacing: "-0.03em",
+                        letterSpacing: "-0.04em",
                         color: isActive ? "#303030" : "rgba(94, 94, 94, 0.8)",
                       }}
                       className={cn(
@@ -238,26 +258,70 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Bottom Section — Pinned to Bottom via mt-auto */}
+      {/* Bottom Section — Frame 1984077460: Width 256px, Height 130px, Gap 8px (Pinned via mt-auto) */}
       <div
         className={cn(
-          "w-full flex flex-col gap-1.5 mt-auto pt-3",
-          isCollapsed ? "items-center w-[38px]" : "w-full"
+          "w-full flex flex-col gap-2 mt-auto pt-2 shrink-0",
+          isCollapsed ? "items-center w-[42px]" : "w-full"
         )}
       >
-        {/* DPS School Card (Pinned at bottom) */}
+        {/* Settings Button (Width 256px, Height 38px, Padding 8px 12px, Gap 8px, Radius 8px) */}
+        <button
+          onClick={() => onNavSelect?.("Settings")}
+          title={isCollapsed ? "Settings" : undefined}
+          style={{
+            height: "38px",
+            borderRadius: "8px",
+            background: activeNav === "Settings" ? "#F0F0F0" : "transparent",
+            padding: "8px 12px",
+            gap: "8px",
+          }}
+          className={cn(
+            "flex items-center transition-colors select-none cursor-pointer",
+            isCollapsed
+              ? "justify-center w-[42px] p-2"
+              : "w-full text-left",
+            activeNav !== "Settings" && "hover:bg-slate-100/70"
+          )}
+        >
+          <Settings
+            style={{ width: "20px", height: "20px" }}
+            className={cn(
+              "shrink-0",
+              activeNav === "Settings" ? "text-[#303030]" : "text-[rgba(94,94,94,0.8)]"
+            )}
+            strokeWidth={activeNav === "Settings" ? 2 : 1.8}
+          />
+          {!isCollapsed && (
+            <span
+              style={{
+                fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
+                fontWeight: 400,
+                fontSize: "16px",
+                lineHeight: "140%",
+                letterSpacing: "-0.04em",
+                color: activeNav === "Settings" ? "#303030" : "rgba(94, 94, 94, 0.8)",
+              }}
+              className="flex-1 truncate"
+            >
+              Settings
+            </span>
+          )}
+        </button>
+
+        {/* Frame 39959: Delhi Public School Card (Width 256px, Height 84px, Background #F0F0F0, Radius 16px, Padding 12px) */}
         {isCollapsed ? (
-          <div className="flex flex-col items-center gap-1.5">
+          <div className="flex flex-col items-center gap-2">
             <div
               style={{
-                width: "38px",
-                height: "38px",
+                width: "42px",
+                height: "42px",
                 background: "#F0F0F0",
-                borderRadius: "5px",
+                borderRadius: "12px",
               }}
-              className="flex items-center justify-center p-0.5"
+              className="flex items-center justify-center p-1"
             >
-              <div className="w-[30px] h-[30px] rounded-full bg-white flex items-center justify-center border border-emerald-600/20 shadow-2xs">
+              <div className="w-[32px] h-[32px] rounded-full bg-white flex items-center justify-center border border-emerald-600/20 shadow-2xs">
                 <span className="text-[9px] font-black text-emerald-800 tracking-tighter">
                   DPS
                 </span>
@@ -269,11 +333,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={onToggleCollapse}
               title="Expand sidebar"
               style={{
-                width: "38px",
-                height: "30px",
-                borderRadius: "5px",
+                width: "42px",
+                height: "32px",
+                borderRadius: "8px",
               }}
-              className="flex items-center justify-center text-[#2B2B2B] hover:bg-slate-100 transition-colors"
+              className="flex items-center justify-center text-[#2B2B2B] hover:bg-slate-100 transition-colors cursor-pointer"
             >
               <ChevronsRight className="w-4 h-4 text-[#2B2B2B]" />
             </button>
@@ -281,51 +345,58 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <div
             style={{
-              height: "72px",
+              width: "100%",
+              height: "84px",
               background: "#F0F0F0",
-              borderRadius: "6px",
-              padding: "10px 12px",
+              borderRadius: "16px",
+              padding: "12px",
+              gap: "16px",
             }}
-            className="w-full flex items-center gap-2.5"
+            className="flex items-center shrink-0 border border-black/5"
           >
-            {/* School Crest Logo */}
-            <div className="w-[42px] h-[42px] rounded-sm bg-white flex items-center justify-center border border-emerald-600/30 shrink-0 shadow-xs">
-              <div className="text-center">
-                <div className="w-4 h-4 mx-auto text-emerald-700 font-serif font-black text-[10px] leading-none">
-                  ⚖
+            {/* Frame 39958: Width 232px, Height 60px, Gap 8px */}
+            <div className="flex items-center gap-2.5 w-full">
+              {/* Crest Logo (image 3: ~48px × 48px) */}
+              <div className="w-[48px] h-[48px] rounded-xl bg-white flex items-center justify-center border border-emerald-600/20 shrink-0 shadow-2xs p-1">
+                <div className="text-center flex flex-col items-center justify-center">
+                  <div className="text-emerald-700 font-serif font-black text-[12px] leading-none mb-0.5">
+                    ⚖
+                  </div>
+                  <span className="text-[8px] font-black text-emerald-800 tracking-tighter leading-none uppercase">
+                    DPS
+                  </span>
                 </div>
-                <span className="text-[8px] font-black text-emerald-800 tracking-tighter leading-none uppercase">
-                  DPS
-                </span>
               </div>
-            </div>
 
-            {/* Content Text */}
-            <div className="flex flex-col justify-center min-w-0">
-              <p
-                style={{
-                  fontFamily: "var(--font-bricolage), sans-serif",
-                  fontSize: "14px",
-                  lineHeight: "130%",
-                  letterSpacing: "-0.03em",
-                  color: "#303030",
-                }}
-                className="font-bold truncate"
-              >
-                Delhi Public School
-              </p>
-              <p
-                style={{
-                  fontFamily: "var(--font-bricolage), sans-serif",
-                  fontSize: "12px",
-                  lineHeight: "130%",
-                  letterSpacing: "-0.03em",
-                  color: "#5E5E5E",
-                }}
-                className="font-normal truncate"
-              >
-                Bokaro Steel City
-              </p>
+              {/* Content Text: Width 165px, Height 44px */}
+              <div className="flex flex-col justify-center min-w-0">
+                <p
+                  style={{
+                    fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
+                    fontWeight: 700,
+                    fontSize: "16px",
+                    lineHeight: "140%",
+                    letterSpacing: "-0.04em",
+                    color: "#303030",
+                  }}
+                  className="truncate"
+                >
+                  Delhi Public School
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "14px",
+                    lineHeight: "140%",
+                    letterSpacing: "-0.04em",
+                    color: "#5E5E5E",
+                  }}
+                  className="truncate"
+                >
+                  Bokaro Steel City
+                </p>
+              </div>
             </div>
           </div>
         )}

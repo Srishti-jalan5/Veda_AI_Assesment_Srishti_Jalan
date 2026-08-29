@@ -84,7 +84,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
   const isImageFile = file?.name && /\.(png|jpe?g|webp)$/i.test(file.name);
 
   return (
-    <div className="flex-1 w-full max-w-[345px]">
+    <div className="flex-1 w-full max-w-[375px]">
       <input
         ref={fileInputRef}
         type="file"
@@ -93,7 +93,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
         className="hidden"
       />
 
-      {/* Main Dropzone Card (Height: 146px, Radius: 12px, Scaled Compact Density) */}
+      {/* Main Dropzone Card (Width: ~374.5px, Height: 181px, Radius: 20px, Dashed Border) */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -101,13 +101,13 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
         onClick={() => !file && fileInputRef.current?.click()}
         style={{
           width: "100%",
-          maxWidth: "345px",
-          height: "146px",
-          borderRadius: "12px",
+          maxWidth: "375px",
+          height: "181px",
+          borderRadius: "20px",
           border: "1.5px dashed #CECECE",
         }}
         className={cn(
-          "relative bg-white p-[8px] flex items-center justify-center transition-all select-none",
+          "relative bg-white p-4 flex items-center justify-center transition-all select-none",
           file
             ? "cursor-default"
             : "hover:border-[#FF5623] cursor-pointer hover:bg-orange-50/10 shadow-xs",
@@ -115,34 +115,35 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
         )}
       >
         {file ? (
-          /* Filled State Card (Compact Gray Pill) */
+          /* Filled State Card */
           <div className="relative flex items-center justify-center w-full animate-in fade-in zoom-in-95 duration-150">
-            {/* Gray Pill Container (Height: 52px, Background: #F6F6F6, Radius: 8px) */}
+            {/* Gray Pill Container (Height: 58px, Background: #F6F6F6, Radius: 12px) */}
             <div
               style={{
-                width: type === "question_paper" ? "270px" : "240px",
-                height: "52px",
+                width: "100%",
+                maxWidth: "290px",
+                height: "58px",
                 background: "#F6F6F6",
-                borderRadius: "8px",
-                padding: "6px 12px 6px 10px",
-                gap: "10px",
+                borderRadius: "12px",
+                padding: "8px 14px",
+                gap: "12px",
               }}
-              className="flex flex-row items-center justify-center shrink-0 relative"
+              className="flex flex-row items-center justify-center shrink-0 relative border border-black/5"
             >
-              {/* Document/Image Badge Icon (28px × 34px) */}
+              {/* Document/Image Badge Icon (32px × 38px) */}
               <div
                 style={{
-                  width: "28px",
-                  height: "34px",
+                  width: "32px",
+                  height: "38px",
                 }}
                 className={cn(
-                  "rounded-[5px] text-white flex flex-col items-center justify-center shrink-0 shadow-xs",
-                  isImageFile ? "bg-blue-500" : "bg-red-500"
+                  "rounded-md text-white flex flex-col items-center justify-center shrink-0 shadow-2xs",
+                  isImageFile ? "bg-blue-500" : "bg-[#EA4335]"
                 )}
               >
                 <svg
-                  width="15"
-                  height="15"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -152,20 +153,20 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
-                <span className="text-[7px] font-black tracking-tighter leading-none uppercase">
+                <span className="text-[7.5px] font-black tracking-tighter leading-none uppercase">
                   {isImageFile ? "IMG" : "PDF"}
                 </span>
               </div>
 
               {/* File Info Group */}
               <div className="flex flex-col items-start min-w-0 flex-1">
-                {/* Filename (13.5px font size) */}
+                {/* Filename (14px font size) */}
                 <p
                   title={file.name}
                   style={{
                     fontFamily: "var(--font-bricolage), sans-serif",
                     fontWeight: 700,
-                    fontSize: "13.5px",
+                    fontSize: "14px",
                     lineHeight: "130%",
                     letterSpacing: "-0.03em",
                     color: "#2B2B2B",
@@ -175,13 +176,13 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                   {file.name}
                 </p>
 
-                {/* Subtext (11.5px) */}
-                <div className="flex items-center gap-[5px]">
+                {/* Subtext (12px) */}
+                <div className="flex items-center gap-1.5 mt-0.5">
                   <span
                     style={{
                       fontFamily: "var(--font-bricolage), sans-serif",
                       fontWeight: 400,
-                      fontSize: "11.5px",
+                      fontSize: "12px",
                       lineHeight: "125%",
                       letterSpacing: "-0.03em",
                       color: "rgba(94, 94, 94, 0.8)",
@@ -205,7 +206,7 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                     style={{
                       fontFamily: "var(--font-bricolage), sans-serif",
                       fontWeight: 400,
-                      fontSize: "11.5px",
+                      fontSize: "12px",
                       lineHeight: "125%",
                       letterSpacing: "-0.03em",
                       color: "rgba(94, 94, 94, 0.8)",
@@ -215,66 +216,76 @@ export const FileDropzone: React.FC<FileDropzoneProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Floating Dark Close Button (20px × 20px) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onFileRemove();
-              }}
-              title="Remove file"
-              style={{
-                width: "20px",
-                height: "20px",
-                background: "rgba(43, 43, 43, 0.85)",
-                boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.25)",
-                borderRadius: "30px",
-                right: "-5px",
-                top: "-7px",
-              }}
-              className="absolute flex items-center justify-center text-[#EFE4DC] hover:scale-110 active:scale-95 transition-transform z-10 cursor-pointer"
-            >
-              <X className="w-[11px] h-[11px]" strokeWidth={2.5} />
-            </button>
+              {/* Floating Dark Close Button (22px × 22px) */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onFileRemove();
+                }}
+                title="Remove file"
+                style={{
+                  width: "22px",
+                  height: "22px",
+                  background: "#2B2B2B",
+                  boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.25)",
+                  borderRadius: "100px",
+                  right: "-7px",
+                  top: "-7px",
+                }}
+                className="absolute flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-transform z-10 cursor-pointer"
+              >
+                <X className="w-3 h-3 text-white" strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
         ) : (
-          /* Empty Dropzone State */
-          <div className="flex flex-col items-center justify-center gap-[8px] pointer-events-none text-center">
-            {/* Upload Icon Box (36px × 36px) */}
-            <div className="w-[36px] h-[36px] rounded-[7px] bg-[#F3F3F3] flex items-center justify-center p-[4px]">
-              <Upload className="w-[18px] h-[18px] text-[#303030]" strokeWidth={2} />
+          /* Empty Dropzone State (Frame 1984077924 / Frame 1984077925: width ~198px, height 110px, gap 16px) */
+          <div className="flex flex-col items-center justify-center gap-4 pointer-events-none text-center">
+            {/* Upload Icon Box (Frame 1984078308: 48px × 48px, Background #F3F3F3, Radius 8px) */}
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                background: "#F3F3F3",
+                borderRadius: "8px",
+                padding: "4px",
+              }}
+              className="flex items-center justify-center shrink-0"
+            >
+              <Upload className="w-6 h-6 text-[#303030]" strokeWidth={2.2} />
             </div>
 
-            {/* Text Group */}
-            <div className="flex flex-col items-center gap-[1px]">
-              {/* Title (15.5px) */}
+            {/* Text Group (Frame 1618872200: width ~198px, height 46px, gap 2px) */}
+            <div className="flex flex-col items-center gap-0.5">
+              {/* Title (20px, font-semibold 600, line-height 22px, letter-spacing -0.06em) */}
               <p
                 style={{
-                  fontFamily: "var(--font-bricolage), sans-serif",
-                  fontSize: "15.5px",
-                  lineHeight: "19px",
-                  letterSpacing: "-0.04em",
+                  fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "20px",
+                  lineHeight: "22px",
+                  letterSpacing: "-0.06em",
                   color: "#303030",
                 }}
-                className="font-semibold whitespace-nowrap"
+                className="whitespace-nowrap"
               >
                 {titlePrefix}{" "}
                 <span className="text-[#FF5623]">{highlightText}</span>
               </p>
 
-              {/* Subtitle (11.5px) */}
+              {/* Subtitle (14px, regular 400, line-height 22px, letter-spacing -0.06em) */}
               <p
                 style={{
-                  fontFamily: "var(--font-bricolage), sans-serif",
-                  fontSize: "11.5px",
-                  lineHeight: "16px",
-                  letterSpacing: "-0.04em",
+                  fontFamily: "var(--font-bricolage), 'Bricolage Grotesque', sans-serif",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "22px",
+                  letterSpacing: "-0.06em",
                   color: "rgba(94, 94, 94, 0.55)",
                 }}
-                className="font-normal"
               >
-                PDF or Image (Max 10MB)
+                Max 10MB
               </p>
             </div>
           </div>

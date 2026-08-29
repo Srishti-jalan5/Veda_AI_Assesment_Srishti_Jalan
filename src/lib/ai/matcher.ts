@@ -33,6 +33,9 @@ export interface QuestionMapping {
   matched_answer_ids: string[];
   candidate_scores: CandidateScoreBreakdown[];
   matched_answers: HandwrittenAnswerBlock[];
+  page_number?: number | null;
+  boundingBox?: AnswerBoundingBox | null;
+  student_text?: string | null;
   notes?: string;
 }
 
@@ -71,22 +74,18 @@ const DEFAULT_UNCERTAIN_THRESHOLD = 0.40;
 // ==========================================
 
 /**
- * Normalizes question and answer labels for robust comparison:
+ * Normalizes question and answer labels for robust, deterministic comparison:
  * e.g. "Q. 11 (a)" -> "11a", "Ans 3" -> "3", "Section B - Q2" -> "2"
  */
-export function normalizeLabel(rawLabel: string | null | undefined): string {
-  if (!rawLabel) return "";
+export function normalizeLabel(raw: string | null | undefined): string {
+  if (!raw) return "";
 
-  let cleaned = rawLabel
+  return raw
     .toLowerCase()
     .replace(/^section\s+[a-z0-9]+\s*[-–—:]*\s*/i, "")
-    .replace(/^(?:question|ans|q|answer|part)[\s.:_-]*/i, "")
-    .replace(/[\s().[\]{}_-]/g, "")
+    .replace(/^(?:question|answer|ans|part|q)\s*[:.\-]?/i, "") // longer words before single letter 'q'
+    .replace(/[^a-z0-9]/g, "")                                // remove dots, brackets, spaces
     .trim();
-
-  // If starts with "q" after stripping (e.g. "q2" -> "2")
-  cleaned = cleaned.replace(/^q(\d+)/i, "$1");
-  return cleaned;
 }
 
 /**
@@ -418,6 +417,8 @@ export async function mapQuestionsToAnswers(
       }
     }
 
+    const primaryBlock = matchedAnswerBlocks[0];
+
     mappings.push({
       question_id: question.id,
       question_number: question.question_number,
@@ -426,6 +427,9 @@ export async function mapQuestionsToAnswers(
       matched_answer_ids: matchedAnswerIds,
       candidate_scores: candidateScores,
       matched_answers: matchedAnswerBlocks,
+      page_number: primaryBlock ? primaryBlock.page_number : null,
+      boundingBox: primaryBlock ? primaryBlock.bounding_box : null,
+      student_text: primaryBlock ? primaryBlock.handwritten_text : null,
     });
   }
 
@@ -453,4 +457,45 @@ export async function mapQuestionsToAnswers(
       unmapped_answers_count: unmapped_answers.length,
     },
   };
+}
+
+/**
+ * Direct deterministic mapping function for fast question-to-answer binding
+ */
+export function mapQuestionsToAnswersDirect<
+  Q extends { id: string; question_number: string },
+  A extends { detected_question_label?: string | null; page_number: number; bounding_box?: any; handwritten_text: string }
+>(
+  questions: Q[],
+  allAnswers: A[]
+) {
+  return questions.map((question) => {
+    const targetKey = normalizeLabel(question.question_number);
+
+    // Find the exact matching answer block
+    const matched = allAnswers.find((ans) => {
+      if (!ans.detected_question_label) return false;
+      return normalizeLabel(ans.detected_question_label) === targetKey;
+    });
+
+    if (matched && matched.bounding_box) {
+      return {
+        question_id: question.id,
+        question_number: question.question_number,
+        status: "matched" as const,
+        page_number: matched.page_number,
+        boundingBox: matched.bounding_box, // Tightly bound to this specific answer
+        student_text: matched.handwritten_text,
+      };
+    }
+
+    return {
+      question_id: question.id,
+      question_number: question.question_number,
+      status: "unanswered" as const,
+      page_number: null,
+      boundingBox: null,
+      student_text: null,
+    };
+  });
 }

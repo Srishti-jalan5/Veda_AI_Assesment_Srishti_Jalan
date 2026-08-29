@@ -105,37 +105,53 @@ export class AnswerExtractionError extends Error {
 // 3. System Prompt & Strict Vision Instructions
 // ==========================================
 
-export const HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT = `
-You are an expert handwritten examination OCR analyzer and visual document parser.
-Analyze this page of the student answer sheet and extract EVERY discrete student answer block.
+export function getHandwrittenAnswerExtractionPrompt(pageNumber: number): string {
+  return `You are an expert document layout analysis and visual segmentation engine.
+Analyze the handwritten answer sheet image provided for Page ${pageNumber}.
 
-Strict Bounding Box Instructions:
-1. Bounding box coordinates must be normalized integers [0-1000] for [ymin, xmin, ymax, xmax].
-2. ymin must align EXACTLY with the top of the written label (e.g., 'Ans 8.', 'Ans 2.', '11(a)', 'Q.1').
-3. ymax must align EXACTLY with the baseline of the LAST sentence belonging to THAT answer.
-4. DO NOT extend ymax into the next answer's header ('Ans 7.') or bottom page margins.
-5. DO NOT enclose student headers, names, roll numbers, or unrelated text.
-6. xmin and xmax should tightly wrap the horizontal line width of the written text.
-7. If an answer starts on this page and continues, transcribe this page's segment.
-8. If an answer is scratch calculation, flag "is_scratch_work": true.
+Your task is to identify every individual answer response and draw an exact bounding box [ymin, xmin, ymax, xmax] around it.
 
-Return strict JSON:
+Strict Coordinate Anchoring Rules:
+1. Label Detection (Top Anchor):
+   - Find the question identifier/label written by the student (e.g., 'Ans 1.', 'Ans 2.', '3.', 'Q4', '11 (a)', 'Section B 12').
+   - Set \`ymin\` precisely at the highest point of this label's handwritten ink (include slight padding of 5 units).
+
+2. Response Body (Bottom Anchor):
+   - Track all handwritten sentences belonging to this response.
+   - Set \`ymax\` at the lowest descender of the final word or period of THIS answer only.
+   - CRITICAL: Stop immediately before the next question label begins or before a blank dividing section. Never let \`ymax\` overlap with the next answer's label or bleed into bottom margins.
+
+3. Horizontal Span (Left/Right Anchors):
+   - Set \`xmin\` to include the leftmost ink stroke (usually the label or indentation).
+   - Set \`xmax\` to the rightmost word margin across all lines of this answer.
+
+4. Normalized Coordinate System:
+   - Coordinates MUST be integers on a 0 to 1000 normalized grid:
+     - ymin: 0 (top of page) to 1000 (bottom of page)
+     - xmin: 0 (left edge) to 1000 (right edge)
+
+5. Return JSON format:
 {
-  "student_identifier": string | null,
+  "page_number": ${pageNumber},
   "answers": [
     {
-      "id": string,
-      "detected_question_label": string | null,
-      "handwritten_text": string,
-      "page_number": number,
-      "bounding_box": { "ymin": number, "xmin": number, "ymax": number, "xmax": number },
-      "confidence": number,
-      "is_scratch_work": boolean,
-      "diagram_detected": boolean
+      "id": "ans_p${pageNumber}_1",
+      "detected_question_label": "3",
+      "handwritten_text": "verbatim transcription...",
+      "page_number": ${pageNumber},
+      "bounding_box": {
+        "ymin": 150,
+        "xmin": 80,
+        "ymax": 320,
+        "xmax": 920
+      },
+      "confidence": 0.99
     }
   ]
+}`;
 }
-`;
+
+export const HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT = getHandwrittenAnswerExtractionPrompt(1);
 
 // ==========================================
 // 4. Validation Helper
@@ -182,6 +198,8 @@ async function extractAnswersFromSinglePage(
   const groqApiKey = getResolvedGroqApiKey(options.apiKey);
   const geminiApiKey = getResolvedGeminiApiKey(options.apiKey);
 
+  const pagePrompt = getHandwrittenAnswerExtractionPrompt(page.pageNumber);
+
   // 1. Text-only path via Groq if digital text exists and no image available
   if (groqApiKey && page.extractedText && page.extractedText.trim().length > 30 && !page.dataUrl?.startsWith("data:image/png")) {
     try {
@@ -195,7 +213,7 @@ async function extractAnswersFromSinglePage(
           model: "openai/gpt-oss-120b",
           response_format: { type: "json_object" },
           messages: [
-            { role: "system", content: HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT },
+            { role: "system", content: pagePrompt },
             {
               role: "user",
               content: `Extract all student answers from Page ${page.pageNumber} text:\n\n${page.extractedText}`,
@@ -234,7 +252,7 @@ async function extractAnswersFromSinglePage(
     ];
 
     const parts: Array<Record<string, unknown>> = [
-      { text: HANDWRITTEN_ANSWER_EXTRACTION_SYSTEM_PROMPT },
+      { text: pagePrompt },
     ];
 
     const base64Data = page.imageBase64 || page.dataUrl?.split(",")[1] || "";

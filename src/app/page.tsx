@@ -46,6 +46,7 @@ export default function Home() {
     setProcessedAssessment(null);
     setProcessingError(null);
     setCurrentStep("processing");
+    setSidebarCollapsed(true);
 
     if (apiCallPendingRef.current) return;
     apiCallPendingRef.current = true;
@@ -86,6 +87,7 @@ export default function Home() {
           : "An error occurred while evaluating the assessment files."
       );
       setCurrentStep("upload");
+      setSidebarCollapsed(false);
     } finally {
       apiCallPendingRef.current = false;
     }
@@ -109,6 +111,7 @@ export default function Home() {
 
   const handleBackToUpload = () => {
     setCurrentStep("upload");
+    setSidebarCollapsed(false);
   };
 
   return (
@@ -187,7 +190,7 @@ export default function Home() {
           )}
 
           {currentStep === "processing" && (
-            <div className="w-full h-full flex items-center justify-center p-2.5 pt-2 pb-3 pr-3 pl-2">
+            <div className="w-full h-full flex items-center justify-center p-3">
               <ProcessingScreen
                 onComplete={handleProcessingComplete}
                 autoCompleteDurationMs={2200}
