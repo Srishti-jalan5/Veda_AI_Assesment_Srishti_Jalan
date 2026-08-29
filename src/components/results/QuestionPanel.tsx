@@ -10,12 +10,14 @@ interface QuestionPanelProps {
   questions: QuestionItem[];
   selectedQuestionId: string;
   onSelectQuestion: (question: QuestionItem) => void;
+  scrollRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export const QuestionPanel: React.FC<QuestionPanelProps> = ({
   questions,
   selectedQuestionId,
   onSelectQuestion,
+  scrollRef,
 }) => {
   const [expandedMap, setExpandedMap] = useState<Record<string, boolean>>({
     [selectedQuestionId || "q-2"]: true,
@@ -31,6 +33,67 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
       questions.forEach((q) => (all[q.id] = true));
       setExpandedMap(all);
     }
+  };
+
+  const internalScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = scrollRef || internalScrollRef;
+
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const updateScrollProgress = React.useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll > 0) {
+      setScrollProgress(Math.min(1, Math.max(0, el.scrollTop / maxScroll)));
+    } else {
+      setScrollProgress(0);
+    }
+  }, [scrollContainerRef]);
+
+  React.useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    updateScrollProgress();
+
+    el.addEventListener("scroll", updateScrollProgress, { passive: true });
+    window.addEventListener("resize", updateScrollProgress);
+
+    return () => {
+      el.removeEventListener("scroll", updateScrollProgress);
+      window.removeEventListener("resize", updateScrollProgress);
+    };
+  }, [scrollContainerRef, updateScrollProgress, questions, expandedMap]);
+
+  const handlePillMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    const startY = e.clientY;
+    const initialScrollTop = el.scrollTop;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    const travelRange = Math.max(1, el.clientHeight - 71);
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      const scrollDelta = (deltaY / travelRange) * maxScroll;
+      el.scrollTop = initialScrollTop + scrollDelta;
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
   };
 
   const handleCardClick = (question: QuestionItem) => {
@@ -90,23 +153,6 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
       }}
       className="relative w-full h-full flex flex-col overflow-hidden select-none border border-black/5"
     >
-      {/* Floating Scroll Indicator Handle Pill (Figma: Primary Button - White / Scroll Bar Handle) */}
-      <div
-        style={{
-          position: "absolute",
-          right: "-6px",
-          top: "42%",
-          width: "12px",
-          height: "58px",
-          background: "rgba(255, 255, 255, 0.85)",
-          boxShadow: "0px 4px 22.5px rgba(0, 0, 0, 0.25)",
-          borderRadius: "48px",
-          backdropFilter: "blur(4px)",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-          zIndex: 20,
-        }}
-        className="hidden lg:flex pointer-events-none"
-      />
 
       {/* Frame 1984077861: Width 672px (fluid), Background rgba(255, 255, 255, 0.5), Radius 20px, Padding 16px, Gap 16px */}
       {/* Frame 1984078209: Header Bar (Height: 44px, Gap: 16px) */}
@@ -153,8 +199,49 @@ export const QuestionPanel: React.FC<QuestionPanelProps> = ({
         </button>
       </div>
 
+      {/* Interactive Scroll Indicator Handle Pill (Figma: Primary Button - White, 18px × 71px) */}
+      <div
+        onMouseDown={handlePillMouseDown}
+        style={{
+          position: "absolute",
+          right: "-9px",
+          top: `calc(76px + ${scrollProgress} * (100% - 163px))`,
+          width: "18px",
+          height: "71px",
+          background: "rgba(255, 255, 255, 0.85)",
+          boxShadow: "0px 4px 22.5px rgba(0, 0, 0, 0.25)",
+          borderRadius: "48px",
+          backdropFilter: "blur(4px)",
+          border: "1px solid rgba(0, 0, 0, 0.08)",
+          zIndex: 30,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "4px",
+          cursor: isDragging ? "grabbing" : "grab",
+          transition: isDragging ? "none" : "top 0.05s ease-out",
+        }}
+        className="hidden lg:flex select-none hover:scale-105 transition-transform"
+        title="Drag to scroll questions"
+      >
+        {/* 5 Vertical dot indicators */}
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: "4px",
+              height: "4px",
+              borderRadius: "50%",
+              background: "#2C9C6B",
+              opacity: 0.7,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Scrollable Questions Column */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pr-1 space-y-3">
         {questions.map((q) => {
           const isSelected = q.id === selectedQuestionId;
           const isExpanded = expandedMap[q.id] || isSelected;

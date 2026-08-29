@@ -126,7 +126,7 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
       </div>
 
       {/* Main Split-View Workspace (Left: QuestionPanel responsive, Right: AnswerViewer - Frame 1984077862: max 1343px, gap 12px) */}
-      <div className="flex-1 max-w-[1343px] w-full mx-auto flex flex-row overflow-hidden p-0 gap-3">
+      <div className="flex-1 max-w-[1343px] w-full mx-auto flex flex-row overflow-hidden p-0 gap-3 relative">
         {/* Left Side: Question List & Rubric Panel (Frame 1984077861: ~672px / 50% split) */}
         <div
           className={cn(
@@ -140,6 +140,7 @@ export const AssessmentReviewWorkspace: React.FC<AssessmentReviewWorkspaceProps>
             onSelectQuestion={handleSelectQuestion}
           />
         </div>
+
 
         {/* Right Side: Interactive Answer Sheet Document Viewer with Highlights */}
         <div

@@ -20,6 +20,34 @@ interface SidebarProps {
   onNavSelect?: (nav: string) => void;
 }
 
+const ClassroomIcon: React.FC<{
+  className?: string;
+  style?: React.CSSProperties;
+  strokeWidth?: number;
+}> = ({ className, style }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img
+    src="/classroom-icon.png"
+    alt="My Classroom"
+    style={{ ...style, borderRadius: "4px" }}
+    className={cn("object-contain shrink-0", className)}
+  />
+);
+
+const ExamsIcon: React.FC<{
+  className?: string;
+  style?: React.CSSProperties;
+  strokeWidth?: number;
+}> = ({ className, style }) => (
+  // eslint-disable-next-line @next/next/no-img-element
+  <img
+    src="/exams-icon.png"
+    alt="Exams"
+    style={{ ...style, width: "20px", height: "20px" }}
+    className={cn("object-contain shrink-0", className)}
+  />
+);
+
 export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
@@ -28,9 +56,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     { id: "Home", label: "Home", icon: LayoutGrid },
-    { id: "My Classroom", label: "My Classroom", icon: Users },
+    { id: "My Classroom", label: "My Classroom", icon: ClassroomIcon },
     { id: "Assignments", label: "Assignments", icon: FileText },
-    { id: "Exams", label: "Exams", icon: ClipboardList },
+    { id: "Exams", label: "Exams", icon: ExamsIcon },
     { id: "My Library", label: "My Library", icon: PieChart },
   ];
 
@@ -314,17 +342,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex flex-col items-center gap-2">
             <div
               style={{
-                width: "42px",
-                height: "42px",
+                width: "46.48px",
+                height: "47.2px",
+                padding: "2px",
+                gap: "11.52px",
                 background: "#F0F0F0",
-                borderRadius: "12px",
+                borderRadius: "11.52px",
               }}
-              className="flex items-center justify-center p-1"
+              className="flex flex-col items-center justify-center shrink-0 overflow-hidden"
             >
-              <div className="w-[32px] h-[32px] rounded-full bg-white flex items-center justify-center border border-emerald-600/20 shadow-2xs">
-                <span className="text-[9px] font-black text-emerald-800 tracking-tighter">
-                  DPS
-                </span>
+              <div
+                style={{
+                  width: "42.48px",
+                  height: "43.2px",
+                }}
+                className="flex items-center justify-center overflow-hidden shrink-0"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/dps-logo.png"
+                  alt="DPS Logo"
+                  style={{
+                    width: "42.48px",
+                    height: "43.2px",
+                  }}
+                  className="object-contain shrink-0"
+                />
               </div>
             </div>
 
@@ -356,15 +399,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             {/* Frame 39958: Width 232px, Height 60px, Gap 8px */}
             <div className="flex items-center gap-2.5 w-full">
-              {/* Crest Logo (image 3: ~48px × 48px) */}
-              <div className="w-[48px] h-[48px] rounded-xl bg-white flex items-center justify-center border border-emerald-600/20 shrink-0 shadow-2xs p-1">
-                <div className="text-center flex flex-col items-center justify-center">
-                  <div className="text-emerald-700 font-serif font-black text-[12px] leading-none mb-0.5">
-                    ⚖
-                  </div>
-                  <span className="text-[8px] font-black text-emerald-800 tracking-tighter leading-none uppercase">
-                    DPS
-                  </span>
+              {/* Crest Logo (Frame 39959 / image 3: 46.48px × 47.2px, radius 11.52px, background #F0F0F0) */}
+              <div
+                style={{
+                  width: "46.48px",
+                  height: "47.2px",
+                  padding: "2px",
+                  gap: "11.52px",
+                  background: "#F0F0F0",
+                  borderRadius: "11.52px",
+                }}
+                className="flex flex-col items-start shrink-0 overflow-hidden"
+              >
+                <div
+                  style={{
+                    width: "42.48px",
+                    height: "43.2px",
+                    gap: "5.76px",
+                  }}
+                  className="flex flex-row items-center overflow-hidden shrink-0"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/dps-logo.png"
+                    alt="Delhi Public School Logo"
+                    style={{
+                      width: "42.48px",
+                      height: "43.2px",
+                    }}
+                    className="object-contain shrink-0"
+                  />
                 </div>
               </div>
 
