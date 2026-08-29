@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Minus,
   Plus,
-  Maximize2,
 } from "lucide-react";
 import { QuestionItem } from "@/types/assessment";
 import { cn } from "@/lib/utils";
@@ -74,7 +73,6 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
   const handleZoomIn = () => setZoomLevel((z) => Math.min(z + 10, 180));
   const handleZoomOut = () => setZoomLevel((z) => Math.max(z - 10, 60));
   const handleResetZoom = () => setZoomLevel(100);
-  const handleFitToWidth = () => setZoomLevel(110);
 
   // Handle Page Navigation
   const handlePrevPage = () => {
@@ -180,22 +178,6 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
 
         {/* Frame 1984077851: Action Controls Group (Gap: 12px, Height: 36px) */}
         <div className="flex items-center gap-3">
-          {/* Fit to Width Button */}
-          <button
-            onClick={handleFitToWidth}
-            title="Fit to Width"
-            style={{
-              height: "36px",
-              background: "rgba(255, 255, 255, 0.1)",
-              borderRadius: "8px",
-              padding: "8px 12px",
-            }}
-            className="hidden sm:flex items-center justify-center text-white/90 hover:text-white hover:bg-white/20 active:scale-95 transition-all text-xs font-semibold gap-1 cursor-pointer"
-          >
-            <Maximize2 className="w-4 h-4" />
-            <span>Fit</span>
-          </button>
-
           {/* Frame 1984077844: Zoom Controller Pill (Width: 108px, Height: 36px, Padding: 8px 12px, Radius: 8px, Background rgba(255,255,255,0.1)) */}
           <div
             style={{
@@ -301,7 +283,7 @@ export const AnswerViewer: React.FC<AnswerViewerProps> = ({
             <img
               src={pageImages[currentPageIndex]}
               alt={`Answer Sheet Page ${currentPageIndex + 1}`}
-              className="w-full h-auto block select-none rounded shadow"
+              className="w-full h-auto object-contain block select-none rounded shadow"
             />
           ) : (
             <div className="w-full min-h-[824px] bg-[#FAF8F5] rounded shadow border border-slate-300 flex flex-col items-center justify-center p-8 text-center text-slate-500 font-sans">
